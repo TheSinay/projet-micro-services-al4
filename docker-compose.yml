@@ -1,0 +1,42 @@
+# docker-compose.yml — orchestration locale de la stack microservices.
+#
+# Chaque nouveau service backend s'ajoute ici (build depuis services/<nom>,
+# expose /health, dépend de redis pour l'état partagé). Le frontend et un
+# reverse proxy (Nginx/Traefik) viendront s'ajouter au fil du projet.
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
+
+  # --- Modèle de service backend (à dupliquer par service) ---
+  # <nom-service>:
+  #   build: ./services/<nom-service>
+  #   environment:
+  #     - REDIS_URL=redis://redis:6379/0
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 5
+  #   networks:
+  #     - backend
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  redis-data:
