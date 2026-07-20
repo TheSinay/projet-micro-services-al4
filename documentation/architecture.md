@@ -7,7 +7,7 @@ Ce document est maintenu par l'agent **documentaliste** et doit refléter l'éta
 
 La plateforme met en relation trois types d'acteurs : des **clients** qui commandent des repas, des **restaurateurs** qui gèrent leur établissement, leur menu et la préparation des commandes, et des **livreurs** qui assurent la livraison. Le parcours nominal : le client recherche un restaurant, compose son panier, passe commande ; la commande est validée par le restaurant, payée auprès d'un PSP externe (simulé), préparée, puis assignée au livreur disponible le plus proche ; chaque acteur est notifié aux étapes clés ; après livraison, le client peut évaluer le restaurant et le livreur.
 
-Le système est découpé en **6 microservices + 1 API Gateway** ([ADR 0002](decisions/0002-decoupage-services-plateforme-livraison.md)), conformément à la stratégie de **découpe par charge** ([ADR 0001](decisions/0001-strategie-decoupe-microservices-par-charge.md)). Il s'agit d'un **prototype** : persistance en mémoire ([ADR 0005](decisions/0005-persistance-memoire-prototype.md)), pas de frontend ([ADR 0008](decisions/0008-pas-de-frontend-prototype.md)), démonstration via Swagger, gateway et script de scénario.
+Le système est découpé en **6 microservices + 1 API Gateway** ([ADR 0002](decisions/0002-decoupage-services-plateforme-livraison.md)), conformément à la stratégie de **découpe par charge** ([ADR 0001](decisions/0001-strategie-decoupe-microservices-par-charge.md)). Il intègre un **frontend React / TypeScript** ([ADR 0009](decisions/0009-integration-frontend-react-typescript.md)) comprenant une **Vue Testeur (Tester Dashboard)**, ainsi que des démonstrations via Swagger et l'API Gateway Nginx.
 
 ## 2. Analyse du domaine (bounded contexts)
 
