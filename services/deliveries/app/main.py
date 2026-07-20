@@ -1,6 +1,7 @@
 """Application factory for the deliveries service."""
 
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import Settings, get_settings
@@ -50,6 +51,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     if settings.seed_data:
         seed_couriers(app.state.courier_repository)
 
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     app.add_middleware(CorrelationIdMiddleware)
     app.add_exception_handler(DomainError, _handle_domain_error)
     app.include_router(health_router)

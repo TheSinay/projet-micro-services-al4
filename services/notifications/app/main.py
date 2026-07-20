@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 
 import redis.asyncio as aioredis
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import Settings, get_settings
@@ -75,6 +76,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.notification_repository = repository
     app.state.dispatcher = NotificationDispatcher(repository)
 
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     app.add_middleware(CorrelationIdMiddleware)
     app.add_exception_handler(DomainError, _handle_domain_error)
     app.include_router(health_router)

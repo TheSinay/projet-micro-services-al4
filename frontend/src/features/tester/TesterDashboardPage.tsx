@@ -10,8 +10,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import axios from "axios";
 
+import { apiClient } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-context";
 
@@ -47,7 +47,7 @@ export function TesterDashboardPage() {
     query: useQuery({
       queryKey: ["health", svc.name],
       queryFn: async () => {
-        const res = await axios.get(svc.path);
+        const res = await apiClient.get(svc.path);
         return res.data;
       },
       retry: 1,
@@ -57,7 +57,7 @@ export function TesterDashboardPage() {
   // PSP Chaos Mode mutation
   const chaosMutation = useMutation({
     mutationFn: async (rate: number) => {
-      const res = await axios.post("/api/v1/payments/chaos", { failure_rate: rate });
+      const res = await apiClient.post("/api/v1/payments/chaos", { failure_rate: rate });
       return res.data;
     },
     onSuccess: (data) => {

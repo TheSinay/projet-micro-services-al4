@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 import httpx
 import redis
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.clients import DeliveriesClient, PaymentsClient, RestaurantsClient
@@ -136,6 +137,13 @@ def create_app(
         else None
     )
 
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     app.add_middleware(CorrelationIdMiddleware)
     app.add_exception_handler(DomainError, _handle_domain_error)
     app.include_router(health_router)
