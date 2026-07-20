@@ -8,7 +8,7 @@ export const UNAUTHORIZED_EVENT = "miamgo:unauthorized";
 const LOGIN_URL = "/api/v1/auth/login";
 
 export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:8080",
+  baseURL: import.meta.env.VITE_API_URL ?? "",
   headers: { "Content-Type": "application/json" },
 });
 
