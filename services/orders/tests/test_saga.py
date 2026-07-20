@@ -40,9 +40,7 @@ def _cart_items(client: TestClient) -> list[dict[str, Any]]:
 # ---------------------------------------------------------------- nominal path
 
 
-def test_nominal_saga_confirms_the_order(
-    client: TestClient, downstream: FakeDownstream
-) -> None:
+def test_nominal_saga_confirms_the_order(client: TestClient, downstream: FakeDownstream) -> None:
     body = _checkout(client)
     assert body["status"] == "PREPARING"
     assert body["saga_state"] == "CONFIRMED"
@@ -64,9 +62,7 @@ def test_nominal_saga_confirms_the_order(
     assert _cart_items(client) == []
 
 
-def test_payment_amount_is_the_order_total(
-    client: TestClient, downstream: FakeDownstream
-) -> None:
+def test_payment_amount_is_the_order_total(client: TestClient, downstream: FakeDownstream) -> None:
     body = _checkout(client)
     payment_bodies = [payload for label, payload in downstream.bodies if label == "payment"]
     assert payment_bodies == [{"order_id": body["id"], "amount": body["total"]}]
@@ -80,8 +76,7 @@ def test_correlation_id_is_propagated_to_downstream_calls(
     correlation_id = response.headers["X-Correlation-Id"]
     assert len(downstream.requests) == 3
     assert all(
-        request.headers.get("X-Correlation-Id") == correlation_id
-        for request in downstream.requests
+        request.headers.get("X-Correlation-Id") == correlation_id for request in downstream.requests
     )
 
 

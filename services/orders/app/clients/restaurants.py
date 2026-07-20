@@ -27,9 +27,7 @@ class RestaurantsClient:
         self._http = http
         self._base_url = base_url.rstrip("/")
 
-    async def validate_order(
-        self, restaurant_id: str, items: list[CartItem]
-    ) -> ValidationVerdict:
+    async def validate_order(self, restaurant_id: str, items: list[CartItem]) -> ValidationVerdict:
         """Saga step 2 — ``POST /api/v1/restaurants/{id}/order-validations``.
 
         An unknown restaurant (404) is reported as an invalid verdict instead of an
@@ -72,8 +70,7 @@ class RestaurantsClient:
             json={
                 "order_id": order_id,
                 "items": [
-                    {"menu_item_id": item.menu_item_id, "quantity": item.quantity}
-                    for item in items
+                    {"menu_item_id": item.menu_item_id, "quantity": item.quantity} for item in items
                 ],
             },
             headers=correlation_headers(),

@@ -37,7 +37,7 @@ def _create_order(client: TestClient) -> str:
 
 def _patch_status(client: TestClient, order_id: str, status: str) -> int:
     response = client.patch(f"/api/v1/orders/{order_id}/status", json={"status": status})
-    return response.status_code
+    return int(response.status_code)
 
 
 def test_full_legal_lifecycle(client: TestClient) -> None:

@@ -27,7 +27,11 @@ async def test_in_memory_bus_records_events() -> None:
 async def test_redis_bus_publishes_json_payloads() -> None:
     fake = FakeRedisClient()
     bus = RedisEventBus(fake)  # type: ignore[arg-type]
-    payload = {"event": "order.ready", "correlation_id": "c1", "data": {"order_id": "o1"}}
+    payload: dict[str, object] = {
+        "event": "order.ready",
+        "correlation_id": "c1",
+        "data": {"order_id": "o1"},
+    }
     await bus.publish("order.ready", payload)
     assert len(fake.published) == 1
     channel, message = fake.published[0]

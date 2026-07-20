@@ -48,6 +48,7 @@ def _seed_preparing_order(orders: InMemoryOrderRepository) -> Order:
     orders.add(order)
     return order
 
+
 ORDER_READY_DATA: dict[str, Any] = {
     "restaurant_id": "resto-1",
     "pickup_address": "3 rue des Rosiers, Paris",

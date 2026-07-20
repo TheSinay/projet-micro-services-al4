@@ -243,9 +243,7 @@ class SagaOrchestrator:
                 await self._sleep(self._delivery_retry_delay)
 
         logger.warning("delivery_assignment_exhausted", order_id=order.id)
-        await self._refund_and_cancel(
-            order, "aucun livreur disponible", SAGA_CANCELLED_NO_COURIER
-        )
+        await self._refund_and_cancel(order, "aucun livreur disponible", SAGA_CANCELLED_NO_COURIER)
 
     async def handle_delivery_completed(self, data: dict[str, Any]) -> None:
         """``delivery.completed`` -> DELIVERED + ``order.delivered``."""
@@ -254,14 +252,10 @@ class SagaOrchestrator:
             logger.warning("delivery_completed_unknown_order", order_id=data.get("order_id"))
             return
         if order.status is not OrderStatus.DELIVERING:
-            logger.info(
-                "delivery_completed_ignored", order_id=order.id, status=order.status.value
-            )
+            logger.info("delivery_completed_ignored", order_id=order.id, status=order.status.value)
             return
         self._transition(order, OrderStatus.DELIVERED, SAGA_DELIVERED)
-        self._publish(
-            ORDER_DELIVERED_CHANNEL, {"order_id": order.id, "user_id": order.user_id}
-        )
+        self._publish(ORDER_DELIVERED_CHANNEL, {"order_id": order.id, "user_id": order.user_id})
         logger.info("saga_delivered", order_id=order.id)
 
     def _pickup_address(self, order: Order, label: object) -> dict[str, Any]:
@@ -271,8 +265,12 @@ class SagaOrchestrator:
         to the dropoff coordinates so the assignment can still proceed (documented
         prototype limitation — the courier search radius is then centred on the client).
         """
-        lat = order.restaurant_lat if order.restaurant_lat is not None else order.delivery_address.lat
-        lng = order.restaurant_lng if order.restaurant_lng is not None else order.delivery_address.lng
+        lat = (
+            order.restaurant_lat if order.restaurant_lat is not None else order.delivery_address.lat
+        )
+        lng = (
+            order.restaurant_lng if order.restaurant_lng is not None else order.delivery_address.lng
+        )
         return {"label": str(label) if label is not None else None, "lat": lat, "lng": lng}
 
     # -------------------------------------------------------------- compensation

@@ -8,6 +8,8 @@ Added by the QA agent to lock down the critical business rules:
 - replay after full REFUNDED (documented behaviour: a new charge is legitimate).
 """
 
+from typing import Any
+
 from fastapi.testclient import TestClient
 
 
@@ -18,13 +20,15 @@ def _create_payment(client: TestClient, order_id: str, amount: float) -> str:
     return payment_id
 
 
-def _refund(client: TestClient, payment_id: str, amount: float | None, reason: str = "qa") -> dict:
+def _refund(
+    client: TestClient, payment_id: str, amount: float | None, reason: str = "qa"
+) -> dict[str, Any]:
     payload: dict[str, object] = {"reason": reason}
     if amount is not None:
         payload["amount"] = amount
     response = client.post(f"/api/v1/payments/{payment_id}/refunds", json=payload)
     assert response.status_code == 201, response.text
-    body: dict = response.json()
+    body: dict[str, Any] = response.json()
     return body
 
 

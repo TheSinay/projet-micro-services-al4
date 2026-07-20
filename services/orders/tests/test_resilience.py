@@ -96,7 +96,7 @@ async def test_breaker_half_opens_after_recovery_timeout() -> None:
     clock.advance(14.9)
     assert breaker.state is CircuitState.OPEN
     clock.advance(0.2)
-    assert breaker.state is CircuitState.HALF_OPEN
+    assert breaker.state is CircuitState.HALF_OPEN  # type: ignore[comparison-overlap]
 
 
 async def test_half_open_success_closes_the_circuit() -> None:
@@ -151,7 +151,7 @@ async def test_failure_window_is_sliding() -> None:
     await _fail_n_times(breaker, 1)
     assert breaker.state is CircuitState.CLOSED  # only 1 failure in the window
     await _fail_n_times(breaker, 2)
-    assert breaker.state is CircuitState.OPEN  # 3 failures within the window
+    assert breaker.state is CircuitState.OPEN  # type: ignore[comparison-overlap]  # 3 failures within the window
 
 
 async def test_success_clears_the_failure_history_when_closed() -> None:

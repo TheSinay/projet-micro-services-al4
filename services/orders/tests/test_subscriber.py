@@ -69,9 +69,7 @@ async def test_handle_message_dispatches_to_the_right_handler() -> None:
     subscriber = RedisSubscriber(
         FakeRedisClient(), {"order.ready": ready, "delivery.completed": completed}
     )
-    await subscriber.handle_message(
-        "order.ready", _envelope("order.ready", {"order_id": "o-1"})
-    )
+    await subscriber.handle_message("order.ready", _envelope("order.ready", {"order_id": "o-1"}))
     assert ready.received == [{"order_id": "o-1"}]
     assert completed.received == []
 
@@ -79,9 +77,7 @@ async def test_handle_message_dispatches_to_the_right_handler() -> None:
 async def test_handle_message_ignores_unknown_channels() -> None:
     ready = HandlerRecorder()
     subscriber = RedisSubscriber(FakeRedisClient(), {"order.ready": ready})
-    await subscriber.handle_message(
-        "order.exotic", _envelope("order.exotic", {"order_id": "o-1"})
-    )
+    await subscriber.handle_message("order.exotic", _envelope("order.exotic", {"order_id": "o-1"}))
     assert ready.received == []
 
 
