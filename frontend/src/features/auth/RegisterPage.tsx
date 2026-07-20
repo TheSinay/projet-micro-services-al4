@@ -153,7 +153,10 @@ export function RegisterPage() {
           </form>
           <p className="mt-4 text-center text-sm text-muted-foreground">
             Déjà inscrit ?{" "}
-            <Link to="/login" className="font-medium text-primary underline-offset-4 hover:underline">
+            <Link
+              to="/login"
+              className="font-medium text-primary underline-offset-4 hover:underline"
+            >
               Se connecter
             </Link>
           </p>

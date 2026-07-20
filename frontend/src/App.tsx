@@ -12,6 +12,7 @@ import { OrdersHistoryPage } from "@/features/orders/OrdersHistoryPage";
 import { OrderTrackingPage } from "@/features/orders/OrderTrackingPage";
 import { RestaurantPage } from "@/features/restaurants/RestaurantPage";
 import { RestaurantsPage } from "@/features/restaurants/RestaurantsPage";
+import { TesterDashboardPage } from "@/features/tester/TesterDashboardPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,6 +35,7 @@ export default function App() {
               <Route path="restaurants/:id" element={<RestaurantPage />} />
               <Route path="login" element={<LoginPage />} />
               <Route path="register" element={<RegisterPage />} />
+              <Route path="tester" element={<TesterDashboardPage />} />
               <Route element={<RequireAuth />}>
                 <Route path="checkout" element={<CheckoutPage />} />
                 <Route path="orders" element={<OrdersHistoryPage />} />

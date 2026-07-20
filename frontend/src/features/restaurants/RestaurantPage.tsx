@@ -75,7 +75,11 @@ export function RestaurantPage() {
           <div className="flex shrink-0 items-center gap-3">
             <span className="font-semibold">{formatPrice(item.price)}</span>
             {available ? (
-              <Button size="sm" onClick={() => handleChoose(item)} aria-label={`Ajouter ${item.name} au panier`}>
+              <Button
+                size="sm"
+                onClick={() => handleChoose(item)}
+                aria-label={`Ajouter ${item.name} au panier`}
+              >
                 <Plus aria-hidden="true" />
                 Ajouter
               </Button>

@@ -109,7 +109,10 @@ export function OrderTrackingPage() {
             </CardHeader>
             <CardContent>
               <p className="flex items-start gap-2 text-sm">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <MapPin
+                  className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
                 <span>
                   {order.delivery_address.label ? (
                     <span className="block font-medium">{order.delivery_address.label}</span>

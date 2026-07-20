@@ -1,4 +1,4 @@
-import { History, LogOut, ShoppingBag, UtensilsCrossed } from "lucide-react";
+import { Activity, History, LogOut, ShoppingBag, UtensilsCrossed } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -33,6 +33,12 @@ export function Header() {
         </Link>
 
         <nav aria-label="Navigation principale" className="flex items-center gap-1 sm:gap-2">
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/tester" className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+              <Activity className="mr-1 inline h-4 w-4" aria-hidden="true" />
+              <span>QA Testeur</span>
+            </Link>
+          </Button>
           {user ? (
             <>
               <Button variant="ghost" asChild>
@@ -53,7 +59,12 @@ export function Header() {
               <span className="hidden max-w-32 truncate text-sm text-muted-foreground md:inline">
                 {user.name}
               </span>
-              <Button variant="ghost" size="icon" onClick={handleLogout} aria-label="Se déconnecter">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleLogout}
+                aria-label="Se déconnecter"
+              >
                 <LogOut aria-hidden="true" />
               </Button>
             </>

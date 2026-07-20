@@ -86,7 +86,10 @@ export function OrdersHistoryPage() {
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
                         <span className="font-semibold">{formatPrice(order.total)}</span>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+                        <ChevronRight
+                          className="h-5 w-5 text-muted-foreground"
+                          aria-hidden="true"
+                        />
                       </div>
                     </CardContent>
                   </Card>
