@@ -1,13 +1,9 @@
-# docker-compose.yml — orchestration locale de la stack microservices.
-#
-# Chaque nouveau service backend s'ajoute ici (build depuis services/<nom>,
-# expose /health, dépend de redis pour l'état partagé). Le frontend et un
-# reverse proxy (Nginx/Traefik) viendront s'ajouter au fil du projet.
+# docker-compose.yml — orchestration locale de la stack microservices FitMeal.
 
 services:
   redis:
     image: redis:7-alpine
-    container_name: redis
+    container_name: fitmeal-redis
     ports:
       - "6379:6379"
     healthcheck:
@@ -18,21 +14,144 @@ services:
     networks:
       - backend
 
-  # --- Modèle de service backend (à dupliquer par service) ---
-  # <nom-service>:
-  #   build: ./services/<nom-service>
-  #   environment:
-  #     - REDIS_URL=redis://redis:6379/0
-  #   depends_on:
-  #     redis:
-  #       condition: service_healthy
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-  #     interval: 10s
-  #     timeout: 3s
-  #     retries: 5
-  #   networks:
-  #     - backend
+  users:
+    build: ./services/users
+    container_name: fitmeal-users
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status == 200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
+
+  restaurants:
+    build: ./services/restaurants
+    container_name: fitmeal-restaurants
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - EVENT_BUS=redis
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status == 200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
+
+  orders:
+    build: ./services/orders
+    container_name: fitmeal-orders
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - EVENT_BUS=redis
+      - USERS_SERVICE_URL=http://users:8000
+      - RESTAURANTS_SERVICE_URL=http://restaurants:8000
+      - PAYMENTS_SERVICE_URL=http://payments:8000
+      - DELIVERIES_SERVICE_URL=http://deliveries:8000
+    depends_on:
+      redis:
+        condition: service_healthy
+      users:
+        condition: service_healthy
+      restaurants:
+        condition: service_healthy
+      payments:
+        condition: service_healthy
+      deliveries:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status == 200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
+
+  payments:
+    build: ./services/payments
+    container_name: fitmeal-payments
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status == 200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
+
+  deliveries:
+    build: ./services/deliveries
+    container_name: fitmeal-deliveries
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - EVENT_BUS=redis
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status == 200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
+
+  notifications:
+    build: ./services/notifications
+    container_name: fitmeal-notifications
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - NOTIFICATIONS_EVENT_BACKEND=redis
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status == 200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
+
+  frontend:
+    build: ./frontend
+    container_name: fitmeal-frontend
+    networks:
+      - backend
+
+  gateway:
+    build: ./gateway
+    container_name: fitmeal-gateway
+    ports:
+      - "8080:80"
+    depends_on:
+      - users
+      - restaurants
+      - orders
+      - payments
+      - deliveries
+      - notifications
+      - frontend
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:80/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
 
 networks:
   backend:
