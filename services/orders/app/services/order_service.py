@@ -3,8 +3,8 @@
 import uuid
 from dataclasses import replace
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
-from app.events import EventBus
 from app.repositories.entities import (
     CartItem,
     DeliveryAddress,
@@ -19,6 +19,9 @@ from app.services.exceptions import (
     OrderNotFoundError,
 )
 from app.services.pricing import compute_delivery_fee, compute_subtotal
+
+if TYPE_CHECKING:
+    from app.services.saga import SagaOrchestrator
 
 # Strict state machine: RECEIVED -> PREPARING -> DELIVERING -> DELIVERED,
 # CANCELLED reachable from RECEIVED and PREPARING only.
@@ -46,21 +49,25 @@ class OrderService:
         self,
         carts: CartStore,
         orders: OrderRepository,
-        event_bus: EventBus,
+        saga: "SagaOrchestrator",
         base_delivery_fee: float,
         delivery_fee_per_km: float,
     ) -> None:
         self._carts = carts
         self._orders = orders
-        self._event_bus = event_bus
+        self._saga = saga
         self._base_delivery_fee = base_delivery_fee
         self._delivery_fee_per_km = delivery_fee_per_km
 
-    def place_order(self, data: OrderCreate) -> Order:
-        """Build an order from the user's cart (frozen prices), then empty the cart.
+    async def place_order(self, data: OrderCreate) -> Order:
+        """Build an order from the user's cart (frozen prices) and run the saga (T09).
 
-        The order starts in ``RECEIVED`` with ``saga_state="PENDING"``; the saga
-        orchestrator (T09) takes over from there.
+        The order starts in ``RECEIVED`` with ``saga_state="PENDING"``, then the
+        orchestrator drives validation -> payment -> kitchen ticket with explicit
+        compensations. The cart is emptied ONLY when the saga reaches ``PREPARING``:
+        on a cancelled checkout the client keeps the cart and can retry. The HTTP
+        answer stays 201 in every case — a cancelled order carries its readable
+        ``cancellation_reason`` (see README).
         """
         cart = self._carts.get(data.user_id)
         if cart is None or not cart.items or cart.restaurant_id is None:
@@ -102,12 +109,17 @@ class OrderService:
             saga_state=SAGA_STATE_PENDING,
             created_at=now,
             updated_at=now,
+            restaurant_lat=restaurant_lat,
+            restaurant_lng=restaurant_lng,
         )
         self._orders.add(order)
-        self._carts.clear(data.user_id)
-        # TODO(T09): hand the order over to the saga orchestrator here —
-        # restaurant validation -> payment -> kitchen ticket, with compensations,
-        # publishing order.confirmed / order.cancelled on self._event_bus.
+        # T09 — saga orchestration: validation -> payment -> kitchen ticket, with
+        # compensations; publishes order.confirmed / order.cancelled.
+        await self._saga.run_checkout(order)
+        if order.status is OrderStatus.PREPARING:
+            # The cart is emptied only on a confirmed checkout; otherwise the
+            # client keeps their cart and can simply retry the order.
+            self._carts.clear(data.user_id)
         return order
 
     def get(self, order_id: str) -> Order:

@@ -11,8 +11,13 @@ router = APIRouter(prefix="/orders", tags=["orders"])
 
 
 @router.post("", response_model=OrderRead, status_code=status.HTTP_201_CREATED)
-def place_order(payload: OrderCreate, order_service: OrderServiceDep) -> OrderRead:
-    return OrderRead.model_validate(order_service.place_order(payload))
+async def place_order(payload: OrderCreate, order_service: OrderServiceDep) -> OrderRead:
+    """Checkout: creates the order then runs the saga (T09).
+
+    Always answers 201 with the resulting order: a checkout rejected by the saga
+    returns the CANCELLED order with its readable ``cancellation_reason`` (README).
+    """
+    return OrderRead.model_validate(await order_service.place_order(payload))
 
 
 @router.get("", response_model=list[OrderRead])

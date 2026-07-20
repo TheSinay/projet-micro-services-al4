@@ -68,8 +68,12 @@ class DeliveryAddress:
 class Order:
     """An order: immutable snapshot of the cart with frozen prices.
 
-    ``payment_id``/``delivery_id`` stay ``None`` and ``saga_state`` stays ``"PENDING"``
-    until the saga orchestrator (T09) drives the checkout across services.
+    ``saga_state`` traces the saga orchestrator's progress (T09/T12);
+    ``payment_id``/``delivery_id`` are filled in by the saga steps.
+    ``cancellation_reason`` carries the human-readable reason when the saga
+    cancels the order (the checkout still answers 201, see README).
+    ``restaurant_lat``/``restaurant_lng`` are the coordinates known at checkout,
+    reused as the courier pickup point by the continuation.
     """
 
     id: str
@@ -86,3 +90,6 @@ class Order:
     updated_at: datetime
     payment_id: str | None = None
     delivery_id: str | None = None
+    cancellation_reason: str | None = None
+    restaurant_lat: float | None = None
+    restaurant_lng: float | None = None

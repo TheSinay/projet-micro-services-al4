@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Design tokens (declared ONCE here, consumed via tailwind.config.ts).
+ * Warm food-delivery palette: terracotta primary, cream background,
+ * dark cocoa foreground, plus semantic success/warning/info/destructive.
+ */
+@layer base {
+  :root {
+    --background: 33 45% 97%;
+    --foreground: 20 22% 14%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 20 22% 14%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 22% 14%;
+
+    --primary: 18 82% 46%;
+    --primary-foreground: 30 100% 98%;
+
+    --secondary: 32 55% 92%;
+    --secondary-foreground: 20 30% 22%;
+
+    --muted: 32 30% 93%;
+    --muted-foreground: 24 10% 40%;
+
+    --accent: 32 55% 90%;
+    --accent-foreground: 20 30% 22%;
+
+    --destructive: 0 74% 42%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 148 55% 30%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 36 90% 34%;
+    --warning-foreground: 0 0% 100%;
+
+    --info: 214 75% 38%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 30 25% 86%;
+    --input: 30 25% 82%;
+    --ring: 18 82% 46%;
+
+    --radius: 0.75rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+}

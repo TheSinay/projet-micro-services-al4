@@ -23,10 +23,12 @@ def test_place_order_computes_prices_and_freezes_the_cart(client: TestClient) ->
     # No restaurant coordinates anywhere: flat base fee only.
     assert body["delivery_fee"] == 2.5
     assert body["total"] == 28.0
-    assert body["status"] == "RECEIVED"
-    assert body["saga_state"] == "PENDING"
-    assert body["payment_id"] is None
+    # Nominal saga (T09): the checkout is confirmed synchronously.
+    assert body["status"] == "PREPARING"
+    assert body["saga_state"] == "CONFIRMED"
+    assert body["payment_id"] == "pay-1"
     assert body["delivery_id"] is None
+    assert body["cancellation_reason"] is None
     assert body["restaurant_id"] == "resto-1"
     assert body["delivery_address"]["city"] == "Paris"
     # The cart is emptied by the checkout.
@@ -141,11 +143,12 @@ def test_delivery_address_requires_coordinates(client: TestClient) -> None:
     assert response.status_code == 422
 
 
-def test_no_event_is_published_by_checkout_before_the_saga(client: TestClient) -> None:
-    # T08 wires the EventBus but publishes nothing: the saga (T09) will emit events.
+def test_nominal_checkout_publishes_exactly_one_confirmation_event(client: TestClient) -> None:
+    # The saga (T09) emits order.confirmed once the checkout reaches PREPARING.
     add_item(client, USER_ID, PIZZA_ITEM)
     assert place_order(client).status_code == 201
-    assert client.app.state.event_bus.published == []  # type: ignore[attr-defined]
+    published = client.app.state.event_bus.published  # type: ignore[attr-defined]
+    assert [channel for channel, _ in published] == ["order.confirmed"]
 
 
 DELIVERY_ADDRESS_KEYS = {"label", "street", "city", "lat", "lng"}

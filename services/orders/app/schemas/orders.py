@@ -60,6 +60,9 @@ class OrderRead(BaseModel):
     saga_state: str
     payment_id: str | None
     delivery_id: str | None
+    # Human-readable reason when the saga cancelled the order (checkout stays 201,
+    # the client discovers the failure by consulting the returned/fetched order).
+    cancellation_reason: str | None
     created_at: datetime
     updated_at: datetime
 

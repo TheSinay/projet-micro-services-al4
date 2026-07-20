@@ -9,6 +9,7 @@ from app.events import EventBus
 from app.repositories.interfaces import CartStore, OrderRepository
 from app.services.cart_service import CartService
 from app.services.order_service import OrderService
+from app.services.saga import SagaOrchestrator
 
 
 def get_app_settings(request: Request) -> Settings:
@@ -31,6 +32,11 @@ def get_event_bus(request: Request) -> EventBus:
     return event_bus
 
 
+def get_saga(request: Request) -> SagaOrchestrator:
+    saga: SagaOrchestrator = request.app.state.saga
+    return saga
+
+
 def get_cart_service(
     carts: Annotated[CartStore, Depends(get_cart_store)],
 ) -> CartService:
@@ -40,13 +46,13 @@ def get_cart_service(
 def get_order_service(
     carts: Annotated[CartStore, Depends(get_cart_store)],
     orders: Annotated[OrderRepository, Depends(get_order_repository)],
-    event_bus: Annotated[EventBus, Depends(get_event_bus)],
+    saga: Annotated[SagaOrchestrator, Depends(get_saga)],
     settings: Annotated[Settings, Depends(get_app_settings)],
 ) -> OrderService:
     return OrderService(
         carts,
         orders,
-        event_bus,
+        saga,
         base_delivery_fee=settings.base_delivery_fee,
         delivery_fee_per_km=settings.delivery_fee_per_km,
     )
