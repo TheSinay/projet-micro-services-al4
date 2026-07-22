@@ -30,6 +30,7 @@ class RestaurantService:
                 OpeningHour(day=h.day, open=h.open, close=h.close) for h in data.opening_hours
             ],
             auto_accept=data.auto_accept,
+            owner_id=data.owner_id,
         )
         self._restaurants.add(restaurant)
         return restaurant
@@ -52,6 +53,8 @@ class RestaurantService:
             OpeningHour(day=h.day, open=h.open, close=h.close) for h in data.opening_hours
         ]
         restaurant.auto_accept = data.auto_accept
+        if data.owner_id is not None:
+            restaurant.owner_id = data.owner_id
         self._restaurants.update(restaurant)
         return restaurant
 

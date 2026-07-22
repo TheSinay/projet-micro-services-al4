@@ -27,6 +27,7 @@ class Restaurant:
     opening_hours: list[OpeningHour] = field(default_factory=list)
     # When False, incoming kitchen tickets are refused (SAGA compensation demo).
     auto_accept: bool = True
+    owner_id: str | None = None
 
 
 @dataclass

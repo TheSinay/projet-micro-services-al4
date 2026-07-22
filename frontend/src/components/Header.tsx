@@ -39,6 +39,18 @@ export function Header() {
               <span>QA Testeur</span>
             </Link>
           </Button>
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/restaurant/dashboard" className="text-xs font-semibold">
+              <UtensilsCrossed className="mr-1 inline h-4 w-4" aria-hidden="true" />
+              <span>Espace Restaurateur</span>
+            </Link>
+          </Button>
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/courier/dashboard" className="text-xs font-semibold">
+              <Activity className="mr-1 inline h-4 w-4" aria-hidden="true" />
+              <span>Espace Livreur</span>
+            </Link>
+          </Button>
           {user ? (
             <>
               <Button variant="ghost" asChild>

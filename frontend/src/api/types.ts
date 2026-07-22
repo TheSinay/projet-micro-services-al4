@@ -62,6 +62,7 @@ export interface Restaurant {
   lng: number;
   opening_hours: OpeningHour[];
   auto_accept: boolean;
+  owner_id?: string;
 }
 
 export interface MenuItemOption {

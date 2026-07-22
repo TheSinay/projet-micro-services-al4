@@ -5,6 +5,7 @@ from collections.abc import Iterator
 import pytest
 from fastapi.testclient import TestClient
 
+from app.config import Settings
 from app.main import create_app
 
 USER_PAYLOAD: dict[str, str] = {
@@ -26,7 +27,7 @@ ADDRESS_PAYLOAD: dict[str, object] = {
 @pytest.fixture
 def client() -> Iterator[TestClient]:
     """A TestClient bound to a brand new application instance."""
-    with TestClient(create_app()) as test_client:
+    with TestClient(create_app(Settings(seed_data=False))) as test_client:
         yield test_client
 
 

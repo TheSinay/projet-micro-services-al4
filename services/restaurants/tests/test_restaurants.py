@@ -78,3 +78,16 @@ def test_invalid_opening_hours_are_rejected(client: TestClient) -> None:
         "opening_hours": [{"day": 0, "open": "22:00", "close": "10:00"}],
     }
     assert client.post("/api/v1/restaurants", json=open_after_close).status_code == 422
+
+
+def test_update_restaurant_with_owner_id(client: TestClient) -> None:
+    restaurant = create_restaurant(client)
+    payload = {
+        **RESTAURANT_PAYLOAD,
+        "name": "Updated Name",
+        "owner_id": "usr_resto",
+    }
+    response = client.put(f"/api/v1/restaurants/{restaurant['id']}", json=payload)
+    assert response.status_code == 200
+    assert response.json()["owner_id"] == "usr_resto"
+

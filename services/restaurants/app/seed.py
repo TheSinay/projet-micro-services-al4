@@ -24,6 +24,7 @@ def seed_catalogue(restaurants: RestaurantRepository, menu_items: MenuItemReposi
         lng=2.3730,
         opening_hours=_all_week("11:00", "23:00"),
         auto_accept=True,
+        owner_id="usr_resto",
     )
     sakura = Restaurant(
         id="resto-sakura-sushi",

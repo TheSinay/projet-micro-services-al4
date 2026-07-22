@@ -45,6 +45,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.address_repository = InMemoryAddressRepository()
     app.state.token_store = InMemoryTokenStore()
 
+    if settings.seed_data:
+        from app.seed import seed_users
+
+        seed_users(app.state.user_repository)
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],

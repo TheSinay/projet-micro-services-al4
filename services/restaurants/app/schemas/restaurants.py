@@ -33,6 +33,7 @@ class RestaurantBase(BaseModel):
     lng: float = Field(ge=-180.0, le=180.0)
     opening_hours: list[OpeningHourSchema] = Field(default_factory=list)
     auto_accept: bool = True
+    owner_id: str | None = Field(default=None, max_length=100)
 
 
 class RestaurantCreate(RestaurantBase):

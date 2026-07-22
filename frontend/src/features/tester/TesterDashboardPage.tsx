@@ -25,18 +25,31 @@ const SERVICES = [
 ];
 
 const MOCK_PROFILES = [
-  { id: "usr_alice", name: "Alice (Client)", role: "client", email: "alice@example.com" },
+  {
+    id: "usr_alice",
+    name: "Alice (Client)",
+    role: "client",
+    email: "alice@example.com",
+    password: "Password123!",
+  },
   {
     id: "usr_resto",
     name: "Restaurateur (Le Chef)",
     role: "restaurant_owner",
     email: "chef@gourmet.fr",
+    password: "Password123!",
   },
-  { id: "usr_bob", name: "Bob (Livreur Rapide)", role: "courier", email: "bob@livreur.fr" },
+  {
+    id: "usr_bob",
+    name: "Bob (Livreur Rapide)",
+    role: "courier",
+    email: "bob@livreur.fr",
+    password: "Password123!",
+  },
 ];
 
 export function TesterDashboardPage() {
-  const { user } = useAuth();
+  const { user, login } = useAuth();
   const queryClient = useQueryClient();
   const [chaosRate, setChaosRate] = useState<number>(0);
 
@@ -174,17 +187,30 @@ export function TesterDashboardPage() {
               <strong>Utilisateur actuel :</strong>{" "}
               {user ? `${user.name} (${user.email})` : "Non connecté"}
             </p>
-            <div className="flex flex-wrap gap-2 pt-2">
-              {MOCK_PROFILES.map((profile) => (
-                <Button
-                  key={profile.id}
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => toast.info(`Profil ${profile.name} sélectionné pour tests`)}
-                >
-                  {profile.name}
-                </Button>
-              ))}
+            <div className="flex flex-col gap-3 pt-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Comptes de Test Proposés (Connexion Automatique) :
+              </p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {MOCK_PROFILES.map((profile) => (
+                  <Button
+                    key={profile.id}
+                    variant="outline"
+                    className="flex h-auto flex-col items-start gap-1 p-3 text-left"
+                    onClick={async () => {
+                      try {
+                        await login(profile.email, profile.password);
+                        toast.success(`Session activée pour ${profile.name} !`);
+                      } catch {
+                        toast.error("Erreur de connexion auto testeur");
+                      }
+                    }}
+                  >
+                    <span className="text-sm font-semibold">{profile.name}</span>
+                    <span className="text-xs text-muted-foreground">{profile.email}</span>
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
           <div className="border-t pt-4">

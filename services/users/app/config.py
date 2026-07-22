@@ -12,6 +12,7 @@ class Settings(BaseSettings):
 
     service_name: str = "users"
     log_level: str = "INFO"
+    seed_data: bool = True
     # In production the opaque token store would live in Redis (see README / ADR 0005).
     redis_url: str = "redis://localhost:6379/0"
 
