@@ -9,6 +9,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { apiClient } from "@/api/client";
@@ -50,6 +51,7 @@ const MOCK_PROFILES = [
 
 export function TesterDashboardPage() {
   const { user, login } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [chaosRate, setChaosRate] = useState<number>(0);
 
@@ -201,6 +203,13 @@ export function TesterDashboardPage() {
                       try {
                         await login(profile.email, profile.password);
                         toast.success(`Session activée pour ${profile.name} !`);
+                        if (profile.role === "restaurant_owner") {
+                          navigate("/restaurant/dashboard");
+                        } else if (profile.role === "courier") {
+                          navigate("/courier/dashboard");
+                        } else {
+                          navigate("/");
+                        }
                       } catch {
                         toast.error("Erreur de connexion auto testeur");
                       }
