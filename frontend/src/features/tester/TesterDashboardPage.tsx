@@ -72,7 +72,7 @@ export function TesterDashboardPage() {
   // PSP Chaos Mode mutation
   const chaosMutation = useMutation({
     mutationFn: async (rate: number) => {
-      const res = await apiClient.post("/api/v1/payments/chaos", { failure_rate: rate });
+      const res = await apiClient.post("/api/v1/_chaos", { failure_rate: rate });
       return res.data;
     },
     onSuccess: (data) => {

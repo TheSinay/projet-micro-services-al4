@@ -50,6 +50,7 @@ export default defineConfig({
       "/api/v1/orders": { target: "http://localhost:8003", changeOrigin: true },
       "/api/v1/carts": { target: "http://localhost:8003", changeOrigin: true },
       "/api/v1/payments": { target: "http://localhost:8004", changeOrigin: true },
+      "/api/v1/_chaos": { target: "http://localhost:8004", changeOrigin: true },
       "/api/v1/deliveries": { target: "http://localhost:8005", changeOrigin: true },
       "/api/v1/couriers": { target: "http://localhost:8005", changeOrigin: true },
       "/api/v1/kitchen-tickets": { target: "http://localhost:8002", changeOrigin: true },
