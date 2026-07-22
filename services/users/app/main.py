@@ -48,7 +48,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     if settings.seed_data:
         from app.seed import seed_users
 
-        seed_users(app.state.user_repository)
+        seed_users(app.state.user_repository, app.state.address_repository)
 
     app.add_middleware(
         CORSMiddleware,

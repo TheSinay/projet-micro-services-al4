@@ -22,6 +22,16 @@ export function Header() {
     navigate("/");
   };
 
+  const isResto =
+    user !== null &&
+    (user.email === "chef@gourmet.fr" || user.id === "usr_resto" || user.email.includes("resto"));
+  const isCourier =
+    user !== null &&
+    (user.email === "bob@livreur.fr" ||
+      user.id === "usr_bob" ||
+      user.email.includes("livreur") ||
+      user.email.includes("courier"));
+
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
       <div className="container flex h-16 items-center justify-between gap-4">
@@ -39,18 +49,22 @@ export function Header() {
               <span>QA Testeur</span>
             </Link>
           </Button>
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/restaurant/dashboard" className="text-xs font-semibold">
-              <UtensilsCrossed className="mr-1 inline h-4 w-4" aria-hidden="true" />
-              <span>Espace Restaurateur</span>
-            </Link>
-          </Button>
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/courier/dashboard" className="text-xs font-semibold">
-              <Activity className="mr-1 inline h-4 w-4" aria-hidden="true" />
-              <span>Espace Livreur</span>
-            </Link>
-          </Button>
+          {isResto ? (
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/restaurant/dashboard" className="text-xs font-semibold">
+                <UtensilsCrossed className="mr-1 inline h-4 w-4" aria-hidden="true" />
+                <span>Espace Restaurateur</span>
+              </Link>
+            </Button>
+          ) : null}
+          {isCourier ? (
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/courier/dashboard" className="text-xs font-semibold">
+                <Activity className="mr-1 inline h-4 w-4" aria-hidden="true" />
+                <span>Espace Livreur</span>
+              </Link>
+            </Button>
+          ) : null}
           {user ? (
             <>
               <Button variant="ghost" asChild>

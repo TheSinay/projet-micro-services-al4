@@ -62,7 +62,16 @@ export function CheckoutPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<AddressValues>({ resolver: zodResolver(addressSchema) });
+  } = useForm<AddressValues>({
+    resolver: zodResolver(addressSchema),
+    defaultValues: {
+      label: "Domicile",
+      street: "15 rue de la Roquette",
+      city: "Paris",
+      lat: 48.855,
+      lng: 2.372,
+    },
+  });
 
   const placeOrder = useMutation({
     mutationFn: async ({ address, save }: { address: DeliveryAddress; save: boolean }) => {

@@ -1,7 +1,7 @@
 """Default seed accounts loaded when ``USERS_SEED_DATA`` is True."""
 
-from app.repositories.entities import User
-from app.repositories.interfaces import UserRepository
+from app.repositories.entities import Address, User
+from app.repositories.interfaces import AddressRepository, UserRepository
 from app.services.security import hash_password
 
 SEED_USERS = [
@@ -29,11 +29,26 @@ SEED_USERS = [
 ]
 
 
-def seed_users(user_repository: UserRepository) -> None:
-    """Populate default accounts (client, restaurateur, livreur) if not present."""
+def seed_users(
+    user_repository: UserRepository, address_repository: AddressRepository | None = None
+) -> None:
+    """Populate default accounts (client, restaurateur, livreur) and demo addresses if not present."""
     for user in SEED_USERS:
         if (
             user_repository.get_by_id(user.id) is None
             and user_repository.get_by_email(user.email) is None
         ):
             user_repository.add(user)
+
+    if address_repository is not None and address_repository.get_by_id("addr_alice_home") is None:
+        address_repository.add(
+            Address(
+                id="addr_alice_home",
+                user_id="usr_alice",
+                label="Domicile (Paris 11e)",
+                street="15 rue de la Roquette",
+                city="Paris",
+                lat=48.8550,
+                lng=2.3720,
+            )
+        )

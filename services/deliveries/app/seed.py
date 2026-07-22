@@ -11,6 +11,13 @@ from app.repositories.interfaces import CourierRepository
 def _default_couriers() -> list[Courier]:
     return [
         Courier(
+            id="usr_bob",
+            name="Bob (Livreur Rapide)",
+            phone="+33711223344",
+            available=True,
+            location=Location(lat=48.8566, lng=2.3522),  # Bastille / Paris
+        ),
+        Courier(
             id="courier-marco",
             name="Marco Rossi",
             phone="+33611111111",
@@ -28,7 +35,7 @@ def _default_couriers() -> list[Courier]:
             id="courier-sofia",
             name="Sofia Almeida",
             phone="+33633333333",
-            available=False,  # off shift, never picked by the assignment
+            available=True,
             location=Location(lat=48.8708, lng=2.3033),  # Champs-Elysees
         ),
     ]
