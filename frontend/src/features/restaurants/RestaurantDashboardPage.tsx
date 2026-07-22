@@ -11,8 +11,8 @@ import {
   createMenuItem,
   updateMenuItem,
   deleteMenuItem,
-  type MenuItem,
 } from "@/api/restaurants";
+import type { MenuItem } from "@/api/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
