@@ -1,5 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChefHat, Plus, Edit2, Trash2, Utensils, Store } from "lucide-react";
+import axios from "axios";
+import {
+  ChefHat,
+  Plus,
+  Edit2,
+  Trash2,
+  Utensils,
+  Store,
+  ClipboardList,
+  Clock,
+  Loader2,
+  CookingPot,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -11,8 +23,13 @@ import {
   createMenuItem,
   updateMenuItem,
   deleteMenuItem,
+  listKitchenTickets,
+  updateKitchenTicketStatus,
+  type KitchenTicket,
+  type KitchenTicketStatus,
 } from "@/api/restaurants";
-import type { MenuItem } from "@/api/types";
+import type { BadgeProps } from "@/components/ui/badge";
+import type { MenuItem, RestaurantDetail } from "@/api/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -145,6 +162,41 @@ export function RestaurantDashboardPage() {
     },
   });
 
+  // Kitchen tickets (orders in progress) — polled like the courier dashboard
+  const {
+    data: kitchenTickets = [],
+    isLoading: isTicketsLoading,
+    isError: isTicketsError,
+    refetch: refetchTickets,
+  } = useQuery({
+    queryKey: ["kitchenTickets", myRestaurant?.id],
+    queryFn: () => listKitchenTickets(myRestaurant.id),
+    enabled: Boolean(myRestaurant?.id),
+    refetchInterval: 5000,
+  });
+
+  // Advance a ticket through its lifecycle (PATCH)
+  const updateTicketMutation = useMutation({
+    mutationFn: ({ ticketId, status }: { ticketId: string; status: "PREPARING" | "READY" }) =>
+      updateKitchenTicketStatus(ticketId, status),
+    onSuccess: (updated) => {
+      queryClient.invalidateQueries({ queryKey: ["kitchenTickets", myRestaurant?.id] });
+      toast.success(
+        updated.status === "READY"
+          ? "Commande prête : un livreur va être affecté."
+          : "Préparation démarrée.",
+      );
+    },
+    onError: (err: unknown) => {
+      if (axios.isAxiosError(err) && err.response?.status === 409) {
+        toast.error("Cette commande a déjà changé de statut. La liste a été actualisée.");
+        void refetchTickets();
+        return;
+      }
+      toast.error("Impossible de mettre à jour la commande. Veuillez réessayer.");
+    },
+  });
+
   return (
     <div className="container space-y-8 py-8">
       {/* Header */}
@@ -220,10 +272,74 @@ export function RestaurantDashboardPage() {
                     <span>{myRestaurant.address}</span>
                   </CardDescription>
                 </div>
-                <Badge className="bg-emerald-500">Auto-Accept Actif</Badge>
+                <Badge variant={myRestaurant.auto_accept ? "success" : "secondary"}>
+                  {myRestaurant.auto_accept
+                    ? "Acceptation auto : Active"
+                    : "Acceptation auto : Inactive"}
+                </Badge>
               </div>
             </CardHeader>
           </Card>
+
+          {/* Kitchen Tickets Section */}
+          <section className="space-y-4" aria-labelledby="kitchen-tickets-heading">
+            <div className="flex items-center justify-between">
+              <h2
+                id="kitchen-tickets-heading"
+                className="flex items-center gap-2 text-xl font-semibold"
+              >
+                <ClipboardList className="h-5 w-5 text-primary" />
+                Suivi cuisine / Commandes en cours
+              </h2>
+            </div>
+
+            {isTicketsLoading ? (
+              <div
+                className="flex items-center gap-2 text-muted-foreground"
+                role="status"
+                aria-live="polite"
+              >
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                Chargement des commandes...
+              </div>
+            ) : isTicketsError ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center gap-2 p-8 text-center">
+                  <p className="font-semibold">Impossible de charger les commandes en cuisine.</p>
+                  <Button variant="outline" size="sm" onClick={() => refetchTickets()}>
+                    Réessayer
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : kitchenTickets.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center p-8 text-center">
+                  <CookingPot className="mb-2 h-10 w-10 text-muted-foreground" aria-hidden="true" />
+                  <p className="font-semibold">Aucune commande en cuisine pour le moment</p>
+                  <p className="text-sm text-muted-foreground">
+                    Les nouvelles commandes des clients apparaîtront ici automatiquement.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {kitchenTickets.map((ticket) => (
+                  <KitchenTicketCard
+                    key={ticket.id}
+                    ticket={ticket}
+                    menu={restaurantDetail?.menu}
+                    isUpdating={
+                      updateTicketMutation.isPending &&
+                      updateTicketMutation.variables?.ticketId === ticket.id
+                    }
+                    onAdvance={(status) =>
+                      updateTicketMutation.mutate({ ticketId: ticket.id, status })
+                    }
+                  />
+                ))}
+              </div>
+            )}
+          </section>
 
           {/* Menu Management Section */}
           <section className="space-y-4">
@@ -325,5 +441,93 @@ export function RestaurantDashboardPage() {
         </div>
       ) : null}
     </div>
+  );
+}
+
+const TICKET_STATUS_LABELS: Record<KitchenTicketStatus, string> = {
+  ACCEPTED: "Acceptée",
+  PREPARING: "En préparation",
+  READY: "Prête à récupérer",
+  REFUSED: "Refusée",
+};
+
+const TICKET_STATUS_VARIANTS: Record<KitchenTicketStatus, NonNullable<BadgeProps["variant"]>> = {
+  ACCEPTED: "info",
+  PREPARING: "warning",
+  READY: "success",
+  REFUSED: "destructive",
+};
+
+function KitchenTicketCard({
+  ticket,
+  menu,
+  isUpdating,
+  onAdvance,
+}: {
+  ticket: KitchenTicket;
+  menu: RestaurantDetail["menu"] | undefined;
+  isUpdating: boolean;
+  onAdvance: (status: "PREPARING" | "READY") => void;
+}) {
+  const resolveItemName = (menuItemId: string): string =>
+    menu?.find((dish) => dish.id === menuItemId)?.name ?? menuItemId;
+
+  return (
+    <Card className="flex flex-col justify-between">
+      <CardHeader>
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <CardTitle className="text-base font-bold">
+              Commande #{ticket.order_id.slice(-6)}
+            </CardTitle>
+            <CardDescription className="mt-1 flex items-center gap-1.5 text-xs">
+              <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+              {new Date(ticket.created_at).toLocaleTimeString()}
+            </CardDescription>
+          </div>
+          <Badge variant={TICKET_STATUS_VARIANTS[ticket.status]}>
+            {TICKET_STATUS_LABELS[ticket.status]}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <ul className="space-y-1 text-sm">
+          {ticket.items.map((item, index) => (
+            <li key={`${item.menu_item_id}-${index}`} className="flex items-baseline gap-2">
+              <span className="font-semibold text-primary">{item.quantity} ×</span>
+              <span>{resolveItemName(item.menu_item_id)}</span>
+            </li>
+          ))}
+        </ul>
+
+        {ticket.status === "ACCEPTED" && (
+          <Button className="w-full" onClick={() => onAdvance("PREPARING")} disabled={isUpdating}>
+            {isUpdating ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <CookingPot className="mr-2 h-4 w-4" aria-hidden="true" />
+            )}
+            Commencer la préparation
+          </Button>
+        )}
+
+        {ticket.status === "PREPARING" && (
+          <Button className="w-full" onClick={() => onAdvance("READY")} disabled={isUpdating}>
+            {isUpdating ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <ChefHat className="mr-2 h-4 w-4" aria-hidden="true" />
+            )}
+            Marquer prête
+          </Button>
+        )}
+
+        {ticket.status === "READY" && (
+          <div className="rounded-md bg-muted p-2 text-center text-sm font-medium text-muted-foreground">
+            En attente du livreur
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

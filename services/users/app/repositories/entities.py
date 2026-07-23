@@ -1,6 +1,8 @@
 """Domain entities persisted by the repositories."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
+from app.schemas.users import UserRole
 
 
 @dataclass
@@ -12,6 +14,7 @@ class User:
     password_hash: str
     name: str
     phone: str
+    role: UserRole = field(default=UserRole.CLIENT)
 
 
 @dataclass

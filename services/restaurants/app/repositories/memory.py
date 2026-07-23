@@ -60,5 +60,10 @@ class InMemoryKitchenTicketRepository:
     def get_by_id(self, ticket_id: str) -> KitchenTicket | None:
         return self._tickets.get(ticket_id)
 
+    def list_by_restaurant(self, restaurant_id: str) -> list[KitchenTicket]:
+        return [
+            ticket for ticket in self._tickets.values() if ticket.restaurant_id == restaurant_id
+        ]
+
     def update(self, ticket: KitchenTicket) -> None:
         self._tickets[ticket.id] = ticket

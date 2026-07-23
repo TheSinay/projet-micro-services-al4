@@ -2,6 +2,7 @@
 
 from app.repositories.entities import Address, User
 from app.repositories.interfaces import AddressRepository, UserRepository
+from app.schemas.users import UserRole
 from app.services.security import hash_password
 
 SEED_USERS = [
@@ -11,6 +12,7 @@ SEED_USERS = [
         password_hash=hash_password("Password123!"),
         name="Alice Martin (Client)",
         phone="+33612345678",
+        role=UserRole.CLIENT,
     ),
     User(
         id="usr_resto",
@@ -18,6 +20,7 @@ SEED_USERS = [
         password_hash=hash_password("Password123!"),
         name="Le Chef (Restaurateur)",
         phone="+33698765432",
+        role=UserRole.RESTAURANT_OWNER,
     ),
     User(
         id="usr_bob",
@@ -25,6 +28,7 @@ SEED_USERS = [
         password_hash=hash_password("Password123!"),
         name="Bob (Livreur Rapide)",
         phone="+33711223344",
+        role=UserRole.COURIER,
     ),
 ]
 
@@ -32,7 +36,7 @@ SEED_USERS = [
 def seed_users(
     user_repository: UserRepository, address_repository: AddressRepository | None = None
 ) -> None:
-    """Populate default accounts (client, restaurateur, livreur) and demo addresses if not present."""
+    """Populate default accounts (client, restaurateur, livreur) and demo addresses if absent."""
     for user in SEED_USERS:
         if (
             user_repository.get_by_id(user.id) is None

@@ -1,8 +1,18 @@
 """Schemas for user registration and profile."""
 
+from enum import StrEnum
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+
+
+class UserRole(StrEnum):
+    """Access-control role owned by the backend (source of truth for the frontend)."""
+
+    CLIENT = "client"
+    RESTAURANT_OWNER = "restaurant_owner"
+    COURIER = "courier"
+
 
 # Simple RFC-like pattern; avoids the extra ``email-validator`` dependency (stdlib-only rule).
 Email = Annotated[
@@ -36,3 +46,4 @@ class UserRead(BaseModel):
     email: str
     name: str
     phone: str
+    role: UserRole

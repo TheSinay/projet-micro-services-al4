@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LogIn } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/features/auth/auth-context";
 import { getErrorMessage } from "@/lib/errors";
+import { resolvePostLoginPath } from "@/lib/roles";
 
 const loginSchema = z.object({
   email: z.string().min(1, "L'adresse e-mail est requise").email("Adresse e-mail invalide"),
@@ -20,10 +21,11 @@ const loginSchema = z.object({
 type LoginValues = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [apiError, setApiError] = useState<string | null>(null);
+  const [awaitingProfile, setAwaitingProfile] = useState(false);
 
   const {
     register,
@@ -31,13 +33,21 @@ export function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<LoginValues>({ resolver: zodResolver(loginSchema) });
 
-  const from = (location.state as { from?: string } | null)?.from ?? "/";
+  const from = (location.state as { from?: string } | null)?.from ?? null;
+
+  // Redirect once the profile (and therefore the role) is available.
+  useEffect(() => {
+    if (awaitingProfile && user !== null) {
+      setAwaitingProfile(false);
+      navigate(resolvePostLoginPath(user.role, from), { replace: true });
+    }
+  }, [awaitingProfile, user, from, navigate]);
 
   const onSubmit = async (values: LoginValues) => {
     setApiError(null);
     try {
       await login(values.email, values.password);
-      navigate(from, { replace: true });
+      setAwaitingProfile(true);
     } catch (error) {
       setApiError(
         getErrorMessage(error, {
@@ -94,9 +104,9 @@ export function LoginPage() {
                 {apiError}
               </p>
             ) : null}
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <Button type="submit" className="w-full" disabled={isSubmitting || awaitingProfile}>
               <LogIn aria-hidden="true" />
-              {isSubmitting ? "Connexion…" : "Se connecter"}
+              {isSubmitting || awaitingProfile ? "Connexion…" : "Se connecter"}
             </Button>
           </form>
           <p className="mt-4 text-center text-sm text-muted-foreground">

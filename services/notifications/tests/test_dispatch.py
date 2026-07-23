@@ -113,6 +113,51 @@ def test_delivery_picked_up_notifies_client_only(dispatcher: NotificationDispatc
     }
 
 
+# Regression: the deliveries service now forwards ``user_id`` in its delivery.* events
+# (previously absent -> "livreur en route" / "commande en route" notifications were lost).
+# These tests pin the exact production payload shapes emitted by deliveries.
+def test_delivery_assigned_production_payload_reaches_client(
+    dispatcher: NotificationDispatcher,
+) -> None:
+    deliveries_payload = {
+        "order_id": "order-1",
+        "delivery_id": "dlv-1",
+        "courier_id": "courier-1",
+        "courier_name": "Marco",
+        "user_id": "user-1",
+    }
+    created = dispatcher.handle_event(make_event("delivery.assigned", deliveries_payload))
+    client_notifs = [n for n in created if n.recipient_type is RecipientType.CLIENT]
+    assert [n.recipient_id for n in client_notifs] == ["user-1"]
+
+
+def test_delivery_picked_up_production_payload_reaches_client(
+    dispatcher: NotificationDispatcher,
+) -> None:
+    deliveries_payload = {
+        "order_id": "order-1",
+        "delivery_id": "dlv-1",
+        "courier_id": "courier-1",
+        "user_id": "user-1",
+    }
+    created = dispatcher.handle_event(make_event("delivery.picked_up", deliveries_payload))
+    assert _routing(created) == {
+        (RecipientType.CLIENT, "user-1", Channel.PUSH, "Votre commande est en route"),
+    }
+
+
+def test_delivery_assigned_without_user_id_only_notifies_courier(
+    dispatcher: NotificationDispatcher,
+) -> None:
+    # Legacy / degraded payload (no user_id): the courier is still notified, the client
+    # notification is skipped (recipient_missing_in_payload warning) rather than crashing.
+    data = {"order_id": "order-1", "delivery_id": "dlv-1", "courier_id": "courier-1"}
+    created = dispatcher.handle_event(make_event("delivery.assigned", data))
+    assert _routing(created) == {
+        (RecipientType.COURIER, "courier-1", Channel.PUSH, "Nouvelle course assignée"),
+    }
+
+
 @pytest.mark.parametrize("event", ["delivery.completed", "order.delivered"])
 def test_delivered_events_wish_bon_appetit(dispatcher: NotificationDispatcher, event: str) -> None:
     created = dispatcher.handle_event(make_event(event, {"order_id": "order-1", "user_id": "u1"}))

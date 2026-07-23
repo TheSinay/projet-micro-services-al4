@@ -12,9 +12,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
+import type { UserRole } from "@/api/types";
 import { apiClient } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-context";
+import { homePathForRole } from "@/lib/roles";
 
 const SERVICES = [
   { name: "Users", path: "/api/v1/users/health" },
@@ -25,7 +27,15 @@ const SERVICES = [
   { name: "Notifications", path: "/api/v1/notifications/health" },
 ];
 
-const MOCK_PROFILES = [
+interface MockProfile {
+  id: string;
+  name: string;
+  role: UserRole;
+  email: string;
+  password: string;
+}
+
+const MOCK_PROFILES: MockProfile[] = [
   {
     id: "usr_alice",
     name: "Alice (Client)",
@@ -203,13 +213,7 @@ export function TesterDashboardPage() {
                       try {
                         await login(profile.email, profile.password);
                         toast.success(`Session activée pour ${profile.name} !`);
-                        if (profile.role === "restaurant_owner") {
-                          navigate("/restaurant/dashboard");
-                        } else if (profile.role === "courier") {
-                          navigate("/courier/dashboard");
-                        } else {
-                          navigate("/");
-                        }
+                        navigate(homePathForRole(profile.role));
                       } catch {
                         toast.error("Erreur de connexion auto testeur");
                       }

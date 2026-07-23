@@ -21,13 +21,19 @@ class DeliveriesClient:
         order_id: str,
         pickup_address: dict[str, Any],
         dropoff_address: dict[str, Any],
+        user_id: str | None = None,
     ) -> str | None:
         """``POST /api/v1/deliveries`` — returns the delivery id, or None when no
-        courier is available (409, retried later by the continuation handler)."""
+        courier is available (409, retried later by the continuation handler).
+
+        ``user_id`` is forwarded so deliveries can echo it in its ``delivery.*`` events,
+        letting the notifications service reach the client without an extra lookup.
+        """
         response = await self._http.post(
             f"{self._base_url}/api/v1/deliveries",
             json={
                 "order_id": order_id,
+                "user_id": user_id,
                 "pickup_address": pickup_address,
                 "dropoff_address": dropoff_address,
             },

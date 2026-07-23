@@ -1,7 +1,8 @@
-"""Demo seed data: three couriers at different Paris spots (one off-shift).
+"""Demo seed data: four couriers at different Paris spots, all available.
 
 Enabled by ``Settings.seed_data`` (default True, disabled in tests) so the
-assignment flow can be demonstrated right after startup.
+assignment flow can be demonstrated right after startup. The whole fleet is
+seeded available so a delivery can always be assigned in the demo.
 """
 
 from app.repositories.entities import Courier, Location

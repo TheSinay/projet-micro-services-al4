@@ -53,6 +53,8 @@ export async function deleteMenuItem(restaurantId: string, itemId: string): Prom
   await apiClient.delete(`/api/v1/restaurants/${restaurantId}/menu-items/${itemId}`);
 }
 
+export type KitchenTicketStatus = "ACCEPTED" | "REFUSED" | "PREPARING" | "READY";
+
 export interface KitchenTicketItem {
   menu_item_id: string;
   quantity: number;
@@ -62,9 +64,20 @@ export interface KitchenTicket {
   id: string;
   order_id: string;
   restaurant_id: string;
-  status: "ACCEPTED" | "REFUSED" | "PREPARING" | "READY";
+  status: KitchenTicketStatus;
   items: KitchenTicketItem[];
   created_at: string;
+}
+
+export async function listKitchenTickets(
+  restaurantId: string,
+  status?: KitchenTicketStatus,
+): Promise<KitchenTicket[]> {
+  const { data } = await apiClient.get<KitchenTicket[]>(
+    `/api/v1/restaurants/${restaurantId}/kitchen-tickets`,
+    { params: status ? { status } : undefined },
+  );
+  return data;
 }
 
 export async function updateKitchenTicketStatus(

@@ -95,6 +95,8 @@ async def test_order_ready_requests_a_delivery_and_moves_to_delivering(
     assert delivery_bodies == [
         {
             "order_id": order_id,
+            # Forwarded so deliveries can echo it in delivery.* events for notifications.
+            "user_id": USER_ID,
             "pickup_address": {
                 "label": "3 rue des Rosiers, Paris",
                 "lat": 48.85,

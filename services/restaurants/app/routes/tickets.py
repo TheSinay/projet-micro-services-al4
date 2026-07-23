@@ -3,9 +3,29 @@
 from fastapi import APIRouter, status
 
 from app.dependencies import KitchenTicketServiceDep
+from app.repositories.entities import TicketStatus
 from app.schemas.tickets import KitchenTicketCreate, KitchenTicketRead, KitchenTicketStatusUpdate
 
 router = APIRouter(tags=["kitchen-tickets"])
+
+
+@router.get(
+    "/restaurants/{restaurant_id}/kitchen-tickets",
+    response_model=list[KitchenTicketRead],
+)
+def list_kitchen_tickets(
+    restaurant_id: str,
+    ticket_service: KitchenTicketServiceDep,
+    status: TicketStatus | None = None,
+) -> list[KitchenTicketRead]:
+    """List a restaurant's kitchen tickets (insertion order).
+
+    Optionally filter by ``status`` (ACCEPTED/REFUSED/PREPARING/READY) via the
+    ``?status=`` query parameter. Returns 200 with ``[]`` when the kitchen is
+    empty, and 404 when the restaurant is unknown.
+    """
+    tickets = ticket_service.list_by_restaurant(restaurant_id, status)
+    return [KitchenTicketRead.model_validate(ticket) for ticket in tickets]
 
 
 @router.post(

@@ -48,24 +48,41 @@ export async function updateOrderStatus(orderId: string, status: string): Promis
 
 // --- Deliveries & Couriers ---------------------------------------------------
 
+export interface GeoLocation {
+  lat: number;
+  lng: number;
+}
+
 export interface Courier {
   id: string;
   name: string;
   phone: string;
   available: boolean;
+  location: GeoLocation;
+}
+
+export type DeliveryStatus = "PROPOSED" | "ACCEPTED" | "PICKED_UP" | "DELIVERED";
+
+export interface DeliveryAddress {
+  label: string | null;
   lat: number;
   lng: number;
+}
+
+export interface DeliveryEvent {
+  status: string;
+  at: string;
 }
 
 export interface Delivery {
   id: string;
   order_id: string;
-  courier_id: string | null;
-  status: "ASSIGNED" | "PICKED_UP" | "DELIVERED" | "FAILED";
-  pickup_address: string | null;
-  delivery_address: string;
+  courier_id: string;
+  status: DeliveryStatus;
+  pickup_address: DeliveryAddress;
+  dropoff_address: DeliveryAddress;
+  events: DeliveryEvent[];
   created_at: string;
-  updated_at: string;
 }
 
 export async function listDeliveries(orderId?: string): Promise<Delivery[]> {
@@ -77,7 +94,7 @@ export async function listDeliveries(orderId?: string): Promise<Delivery[]> {
 
 export async function updateDeliveryStatus(
   deliveryId: string,
-  status: "ASSIGNED" | "PICKED_UP" | "DELIVERED" | "FAILED",
+  status: "PICKED_UP" | "DELIVERED",
 ): Promise<Delivery> {
   const { data } = await apiClient.patch<Delivery>(`/api/v1/deliveries/${deliveryId}`, { status });
   return data;
@@ -88,13 +105,21 @@ export async function listCouriers(): Promise<Courier[]> {
   return data;
 }
 
-export async function createCourier(payload: {
+export interface CreateCourierParams {
   name: string;
   phone: string;
   lat: number;
   lng: number;
   available?: boolean;
-}): Promise<Courier> {
-  const { data } = await apiClient.post<Courier>("/api/v1/couriers", payload);
+}
+
+export async function createCourier(params: CreateCourierParams): Promise<Courier> {
+  const { name, phone, lat, lng, available } = params;
+  const { data } = await apiClient.post<Courier>("/api/v1/couriers", {
+    name,
+    phone,
+    available: available ?? true,
+    location: { lat, lng },
+  });
   return data;
 }

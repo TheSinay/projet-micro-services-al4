@@ -4,7 +4,7 @@ import uuid
 
 from app.repositories.entities import User
 from app.repositories.interfaces import UserRepository
-from app.schemas.users import UserCreate, UserUpdate
+from app.schemas.users import UserCreate, UserRole, UserUpdate
 from app.services.exceptions import EmailAlreadyRegisteredError
 from app.services.security import hash_password
 
@@ -26,6 +26,7 @@ class UserService:
             password_hash=hash_password(data.password),
             name=data.name,
             phone=data.phone,
+            role=UserRole.CLIENT,
         )
         self._users.add(user)
         return user

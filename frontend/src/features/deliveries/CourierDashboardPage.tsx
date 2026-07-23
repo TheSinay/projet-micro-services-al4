@@ -10,6 +10,8 @@ import {
   updateDeliveryStatus,
   createCourier,
   type Delivery,
+  type DeliveryAddress,
+  type DeliveryStatus,
 } from "@/api/orders";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,7 +67,7 @@ export function CourierDashboardPage() {
     },
     onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ["deliveries"] });
-      toast.success(`Livraison mise à jour : ${updated.status}`);
+      toast.success(`Livraison mise à jour : ${STATUS_LABELS[updated.status]}`);
     },
     onError: (err: Error) => {
       toast.error(`Erreur de mise à jour : ${err.message}`);
@@ -143,6 +145,30 @@ export function CourierDashboardPage() {
   );
 }
 
+function formatAddress(addr: DeliveryAddress): string {
+  if (addr.label) return addr.label;
+  return `${addr.lat.toFixed(4)}, ${addr.lng.toFixed(4)}`;
+}
+
+const STATUS_LABELS: Record<DeliveryStatus, string> = {
+  PROPOSED: "Proposée",
+  ACCEPTED: "Prête à récupérer",
+  PICKED_UP: "En livraison",
+  DELIVERED: "Livrée",
+};
+
+function getBadgeVariant(status: DeliveryStatus): "secondary" | "default" | "outline" {
+  switch (status) {
+    case "PROPOSED":
+    case "ACCEPTED":
+      return "secondary";
+    case "PICKED_UP":
+      return "default";
+    case "DELIVERED":
+      return "outline";
+  }
+}
+
 function DeliveryCard({
   delivery,
   onUpdateStatus,
@@ -152,25 +178,12 @@ function DeliveryCard({
   onUpdateStatus: (status: "PICKED_UP" | "DELIVERED") => void;
   isUpdating: boolean;
 }) {
-  const getBadgeVariant = (status: Delivery["status"]) => {
-    switch (status) {
-      case "ASSIGNED":
-        return "secondary";
-      case "PICKED_UP":
-        return "default";
-      case "DELIVERED":
-        return "outline";
-      default:
-        return "destructive";
-    }
-  };
-
   return (
     <Card className="flex flex-col justify-between">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-bold">Livraison #{delivery.id.slice(-6)}</CardTitle>
-          <Badge variant={getBadgeVariant(delivery.status)}>{delivery.status}</Badge>
+          <Badge variant={getBadgeVariant(delivery.status)}>{STATUS_LABELS[delivery.status]}</Badge>
         </div>
         <CardDescription>Commande #{delivery.order_id.slice(-6)}</CardDescription>
       </CardHeader>
@@ -180,16 +193,14 @@ function DeliveryCard({
             <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
             <div>
               <span className="font-semibold">Retrait Restaurant :</span>
-              <p className="text-muted-foreground">
-                {delivery.pickup_address || "En attente de confirmation"}
-              </p>
+              <p className="text-muted-foreground">{formatAddress(delivery.pickup_address)}</p>
             </div>
           </div>
           <div className="flex items-start gap-2">
             <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
             <div>
               <span className="font-semibold">Adresse du Client :</span>
-              <p className="text-muted-foreground">{delivery.delivery_address}</p>
+              <p className="text-muted-foreground">{formatAddress(delivery.dropoff_address)}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 pt-1 text-xs text-muted-foreground">
@@ -200,7 +211,7 @@ function DeliveryCard({
 
         {/* Action Buttons */}
         <div className="pt-2">
-          {delivery.status === "ASSIGNED" && (
+          {delivery.status === "ACCEPTED" && (
             <Button
               className="w-full"
               onClick={() => onUpdateStatus("PICKED_UP")}

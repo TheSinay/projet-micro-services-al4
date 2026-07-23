@@ -61,6 +61,21 @@ class KitchenTicketService:
             raise TicketRefusedError()
         return ticket
 
+    def list_by_restaurant(
+        self, restaurant_id: str, status: TicketStatus | None = None
+    ) -> list[KitchenTicket]:
+        """List a restaurant's kitchen tickets (insertion order), optionally by status.
+
+        Raises ``RestaurantNotFoundError`` when the restaurant is unknown so the
+        caller can distinguish an empty kitchen from a bad restaurant id (404).
+        """
+        if self._restaurants.get_by_id(restaurant_id) is None:
+            raise RestaurantNotFoundError()
+        tickets = self._tickets.list_by_restaurant(restaurant_id)
+        if status is not None:
+            tickets = [ticket for ticket in tickets if ticket.status is status]
+        return tickets
+
     async def update_status(self, ticket_id: str, new_status: TicketStatus) -> KitchenTicket:
         """Apply a strict transition; publishes ``order.ready`` when the ticket is READY."""
         ticket = self._tickets.get_by_id(ticket_id)
