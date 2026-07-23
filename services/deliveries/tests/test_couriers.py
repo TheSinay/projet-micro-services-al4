@@ -82,13 +82,15 @@ def test_patch_unknown_courier_returns_404(client: TestClient) -> None:
     assert response.status_code == 404
 
 
-def test_seed_populates_three_couriers_one_unavailable() -> None:
+def test_seed_populates_four_available_couriers() -> None:
     app = create_app(Settings(event_backend="memory", seed_data=True))
     with TestClient(app) as client:
         response = client.get("/api/v1/couriers")
     assert response.status_code == 200
     couriers = response.json()
-    assert len(couriers) == 3
-    assert sum(1 for courier in couriers if not courier["available"]) == 1
+    assert len(couriers) == 4
+    # The demo fleet is seeded fully available so the assignment flow can run
+    # immediately after startup (see seed.py).
+    assert all(courier["available"] for courier in couriers)
     locations = {(courier["location"]["lat"], courier["location"]["lng"]) for courier in couriers}
-    assert len(locations) == 3  # all seeded at different positions
+    assert len(locations) == 4  # all seeded at different positions
