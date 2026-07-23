@@ -22,7 +22,7 @@ L'analyse DDD dégage neuf bounded contexts : **identité & comptes**, **restaur
 | Service | Bounded context(s) | Responsabilités | Modèle de données (agrégats) | Port |
 |---|---|---|---|---|
 | **gateway** (Nginx) | edge | Point d'entrée unique, routage `/api/v1/<domaine>/*`, propagation `X-Correlation-Id` ; futur : auth centralisée, rate limiting, TLS | Aucun (stateless) | 8080 |
-| **service-utilisateurs** (`users`) | Identité & comptes | Inscription, login (token opaque), profil, adresses | `User`, `Address` | 8001 |
+| **service-utilisateurs** (`users`) | Identité & comptes | Inscription, login (token opaque), profil, adresses, **rôle** (`client`/`restaurant_owner`/`courier`) — source de vérité du RBAC ([ADR 0010](decisions/0010-controle-acces-par-role-rbac.md)) | `User` (avec `role`), `Address` | 8001 |
 | **service-restaurants** (`restaurants`) | Restaurants + catalogue | Profil, horaires, menus (plats/prix/options), **recherche** (localisation/cuisine/plat), validation de commande, kitchen tickets (acceptation/refus), préparation `ACCEPTED→PREPARING→READY` | `Restaurant`, `MenuItem`, `KitchenTicket` | 8002 |
 | **service-commandes** (`orders`) | Commandes & checkout + évaluations | Panier (Redis), passage de commande, calcul du prix (sous-total + livraison), machine à états `RECEIVED→PREPARING→DELIVERING→DELIVERED / CANCELLED`, **orchestrateur SAGA**, historique, évaluations | `Cart` (Redis), `Order` (avec snapshot des prix, `saga_state`), `Evaluation` | 8003 |
 | **service-paiements** (`payments`) | Paiement | Autorisation/capture via PSP externe simulé (mode instable `FAILURE_RATE`), remboursements partiels/totaux, **idempotence par `order_id`** | `Payment` (statuts `AUTHORIZED`, `CAPTURED`, `FAILED`, `REFUNDED`, `PARTIALLY_REFUNDED`, remboursements) | 8004 |
@@ -38,6 +38,7 @@ L'analyse DDD dégage neuf bounded contexts : **identité & comptes**, **restaur
 - **Santé** : chaque service expose **`/health`** à la racine (hors préfixe API) pour les health checks compose/load balancer.
 - **Pas de partage de code métier** entre services ; communication uniquement par le réseau.
 - **Versionnement d'API** : toutes les routes métier sont préfixées **`/api/v1`** — les évolutions incompatibles passeront par `/api/v2` sans casser les clients existants.
+- **Contrôle d'accès par rôle (RBAC)** : le champ `role` du service `users` est la **source de vérité** ([ADR 0010](decisions/0010-controle-acces-par-role-rbac.md)). Le cloisonnement des vues (garde `RequireRole`, navigation, redirections) est appliqué **côté frontend** ; le durcissement de l'autorisation côté API / gateway reste à généraliser.
 - **Traçabilité** : logs structurés (structlog JSON) + `X-Correlation-Id` généré si absent et propagé à chaque appel sortant et dans chaque événement.
 
 ## 5. Diagramme de contexte (C4 — niveau 1)
@@ -157,7 +158,7 @@ flowchart TB
 | orders → deliveries : assignation d'un livreur | REST sync | Il faut savoir immédiatement si un livreur est trouvé |
 | `order.confirmed`, `order.cancelled`, `order.delivered` | Async Redis pub/sub | Plusieurs consommateurs, aucune réponse attendue |
 | `order.ready` (publié par restaurants) | Async | orders s'y abonne et déclenche l'assignation |
-| `delivery.assigned` / `picked_up` / `completed` | Async | Suivi : orders met à jour l'état, notifications alerte |
+| `delivery.assigned` / `picked_up` / `completed` | Async | Suivi : orders met à jour l'état, notifications alerte. `delivery.assigned` / `picked_up` portent `user_id` (propagé par orders → deliveries) pour router la notif client ; omis de `completed` car couvert par `order.delivered` ([ADR 0011](decisions/0011-propagation-user-id-notifications-livraison.md)) |
 | `evaluation.created` | Async | Note moyenne côté restaurants — cohérence éventuelle |
 
 Format d'événement : `{"event": str, "correlation_id": str, "data": {...}}` sur les canaux `order.*`, `delivery.*`, `evaluation.*`. Le broker est abstrait derrière une interface `EventBus` (`RedisEventBus` prod / `InMemoryEventBus` tests) — choix et limites dans l'[ADR 0004](decisions/0004-redis-pubsub-broker-evenements.md).
