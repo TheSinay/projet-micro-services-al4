@@ -197,11 +197,14 @@ Détail dans l'[ADR 0003](decisions/0003-saga-orchestree-passage-commande.md). A
 
 - **Backend** : Python 3.13, FastAPI, Pydantic v2, httpx (inter-services async), Redis, structlog. Tests : pytest (couverture ≥ 80 %), ruff, mypy.
 - **Infra** : Docker + docker-compose (6 services + gateway + Redis, healthchecks) ; Makefile (`run`, `test`, `lint`, `build`).
-- **Pas de frontend** dans le prototype (ADR 0008) : démonstration via Swagger `/docs`, gateway et script de scénario.
+- **Frontend** : Application Web React 18, TypeScript, Vite, Tailwind CSS, TanStack Query et Lucide Icons ([ADR 0009](decisions/0009-integration-frontend-react-typescript.md)) avec Vues dédiées par Rôle (Client, Restaurateur, Livreur) et Dashboard QA Testeur.
 
-## 13. Conventions inter-services
+## 13. Conventions et Documents de Livrables
 
-- Contrats d'API : OpenAPI généré par FastAPI, exposé sur `/docs` de chaque service.
+- **Contrats d'API REST** : Spécifications détaillées dans [contrats-api.md](contrats-api.md) et OpenAPI généré dynamiquement sur `/docs` de chaque service.
+- **Diagrammes Techniques (C4, SAGA & Séquences)** : Ensemble des diagrammes Mermaid dans [diagrammes.md](diagrammes.md).
+- **Support de Présentation Orale (15 min)** : Diaporama, script timing et Q&R jury dans [presentation-orale.md](presentation-orale.md).
+- Erreurs normalisées (code, message, détails) — jamais d'erreur brute exposée au client final.
 - Erreurs normalisées (code, message, détails) — jamais d'erreur brute exposée au client final.
 - `X-Correlation-Id` : généré s'il est absent, propagé aux appels sortants et inclus dans les événements et les logs structlog.
 - Testabilité hermétique : aucun test n'exige un Redis ou un service tiers actif (repositories in-memory, `InMemoryEventBus`, client HTTP mocké).
