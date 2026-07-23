@@ -21,6 +21,9 @@ class DeliveryCreate(BaseModel):
     """Payload for ``POST /api/v1/deliveries`` (sent by the orders service)."""
 
     order_id: str = Field(min_length=1, max_length=64)
+    # Client owning the order: forwarded so ``delivery.*`` events can target the client
+    # in the notifications service. Optional for backward compatibility with older callers.
+    user_id: str | None = Field(default=None, max_length=64)
     pickup_address: DeliveryAddress
     dropoff_address: DeliveryAddress
 

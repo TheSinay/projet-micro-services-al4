@@ -228,7 +228,9 @@ class SagaOrchestrator:
         }
         for attempt in range(1, self._delivery_attempts + 1):
             try:
-                delivery_id = await self._deliveries.request_delivery(order.id, pickup, dropoff)
+                delivery_id = await self._deliveries.request_delivery(
+                    order.id, pickup, dropoff, user_id=order.user_id
+                )
             except _DOWNSTREAM_FAILURES as exc:
                 logger.warning(
                     "delivery_request_failed", order_id=order.id, attempt=attempt, error=str(exc)

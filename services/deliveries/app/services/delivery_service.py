@@ -70,6 +70,7 @@ class DeliveryService:
             dropoff_address=self._to_address(data.dropoff_address),
             created_at=now,
             events=[DeliveryEvent(status=DeliveryStatus.PROPOSED, at=now)],
+            user_id=data.user_id,
         )
         self._deliveries.add(delivery)
         courier.available = False
@@ -88,6 +89,8 @@ class DeliveryService:
                 "delivery_id": delivery.id,
                 "courier_id": courier.id,
                 "courier_name": courier.name,
+                # Forwarded so notifications can reach the client (see DeliveryCreate.user_id).
+                "user_id": delivery.user_id,
             },
         )
         logger.info(
@@ -112,10 +115,15 @@ class DeliveryService:
                     "order_id": delivery.order_id,
                     "delivery_id": delivery.id,
                     "courier_id": delivery.courier_id,
+                    # Forwarded so notifications can reach the client.
+                    "user_id": delivery.user_id,
                 },
             )
         else:  # DeliveryStatus.DELIVERED
             self._release_courier(delivery)
+            # ``user_id`` is deliberately omitted here: the final "meal arrived" client
+            # notification is driven by ``order.delivered`` (published by orders, which
+            # already carries ``user_id``). Adding it here would double-notify the client.
             await self._publish(
                 "delivery.completed",
                 {"order_id": delivery.order_id, "delivery_id": delivery.id},

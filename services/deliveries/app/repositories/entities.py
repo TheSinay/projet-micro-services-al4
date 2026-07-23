@@ -62,3 +62,7 @@ class Delivery:
     dropoff_address: GeoAddress
     created_at: datetime
     events: list[DeliveryEvent] = field(default_factory=list)
+    # Owner of the underlying order, forwarded by the orders service at assignment.
+    # Echoed in ``delivery.*`` events so the notifications service can reach the client
+    # without an extra order_id -> user_id lookup.
+    user_id: str | None = None

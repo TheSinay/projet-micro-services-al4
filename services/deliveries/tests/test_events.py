@@ -34,6 +34,8 @@ def test_assignment_publishes_proposed_then_assigned(
             "delivery_id": delivery_id,
             "courier_id": courier_id,
             "courier_name": "Marco",
+            # Forwarded from the POST payload so notifications can reach the client.
+            "user_id": "user-1",
         },
     }
 
@@ -50,7 +52,11 @@ def test_picked_up_and_completed_events(client: TestClient, event_bus: InMemoryE
         "order_id": "order-1",
         "delivery_id": delivery_id,
         "courier_id": courier_id,
+        # Forwarded so notifications can reach the client on "order en route".
+        "user_id": "user-1",
     }
+    # ``delivery.completed`` deliberately omits ``user_id``: the final client
+    # notification is driven by ``order.delivered`` (orders) to avoid double-notifying.
     assert events["delivery.completed"]["data"] == {
         "order_id": "order-1",
         "delivery_id": delivery_id,
@@ -58,6 +64,21 @@ def test_picked_up_and_completed_events(client: TestClient, event_bus: InMemoryE
     # Every payload carries the platform envelope.
     for payload in events.values():
         assert set(payload) == {"event", "correlation_id", "data"}
+
+
+def test_events_carry_null_user_id_when_absent_from_payload(
+    client: TestClient, event_bus: InMemoryEventBus
+) -> None:
+    # Backward compatibility: a caller that does not send ``user_id`` still works;
+    # the delivery.* events simply carry ``user_id: None``.
+    create_courier(client)
+    payload = {k: v for k, v in DELIVERY_PAYLOAD.items() if k != "user_id"}
+    delivery_id = client.post("/api/v1/deliveries", json=payload).json()["id"]
+    client.patch(f"/api/v1/deliveries/{delivery_id}", json={"status": "PICKED_UP"})
+
+    events = _events_by_channel(event_bus)
+    assert events["delivery.assigned"]["data"]["user_id"] is None
+    assert events["delivery.picked_up"]["data"]["user_id"] is None
 
 
 def test_no_event_published_on_failed_assignment(

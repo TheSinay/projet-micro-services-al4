@@ -16,6 +16,7 @@ DROPOFF: dict[str, Any] = {"label": "Client - 5 rue des Lilas", "lat": 48.8500, 
 
 DELIVERY_PAYLOAD: dict[str, Any] = {
     "order_id": "order-1",
+    "user_id": "user-1",
     "pickup_address": PICKUP,
     "dropoff_address": DROPOFF,
 }
