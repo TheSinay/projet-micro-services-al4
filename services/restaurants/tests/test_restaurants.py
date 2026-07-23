@@ -90,4 +90,3 @@ def test_update_restaurant_with_owner_id(client: TestClient) -> None:
     response = client.put(f"/api/v1/restaurants/{restaurant['id']}", json=payload)
     assert response.status_code == 200
     assert response.json()["owner_id"] == "usr_resto"
-
