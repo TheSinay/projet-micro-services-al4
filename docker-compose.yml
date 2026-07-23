@@ -1,0 +1,159 @@
+# docker-compose.yml — orchestration locale de la stack microservices FitMeal.
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: fitmeal-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
+
+  users:
+    build: ./services/users
+    container_name: fitmeal-users
+    environment:
+      - USERS_REDIS_URL=redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status == 200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
+
+  restaurants:
+    build: ./services/restaurants
+    container_name: fitmeal-restaurants
+    environment:
+      - RESTAURANTS_REDIS_URL=redis://redis:6379/0
+      - RESTAURANTS_EVENT_BUS=redis
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status == 200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
+
+  orders:
+    build: ./services/orders
+    container_name: fitmeal-orders
+    environment:
+      - ORDERS_REDIS_URL=redis://redis:6379/0
+      - ORDERS_EVENT_BUS_BACKEND=redis
+      - ORDERS_CART_STORE_BACKEND=redis
+      - ORDERS_RESTAURANTS_URL=http://restaurants:8000
+      - ORDERS_PAYMENTS_URL=http://payments:8000
+      - ORDERS_DELIVERIES_URL=http://deliveries:8000
+    depends_on:
+      redis:
+        condition: service_healthy
+      users:
+        condition: service_healthy
+      restaurants:
+        condition: service_healthy
+      payments:
+        condition: service_healthy
+      deliveries:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status == 200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
+
+  payments:
+    build: ./services/payments
+    container_name: fitmeal-payments
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status == 200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
+
+  deliveries:
+    build: ./services/deliveries
+    container_name: fitmeal-deliveries
+    environment:
+      - DELIVERIES_REDIS_URL=redis://redis:6379/0
+      - DELIVERIES_EVENT_BACKEND=redis
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status == 200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
+
+  notifications:
+    build: ./services/notifications
+    container_name: fitmeal-notifications
+    environment:
+      - NOTIFICATIONS_REDIS_URL=redis://redis:6379/0
+      - NOTIFICATIONS_EVENT_BACKEND=redis
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status == 200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
+
+  frontend:
+    build: ./frontend
+    container_name: fitmeal-frontend
+    networks:
+      - backend
+
+  gateway:
+    build: ./gateway
+    container_name: fitmeal-gateway
+    ports:
+      - "8080:80"
+    depends_on:
+      - users
+      - restaurants
+      - orders
+      - payments
+      - deliveries
+      - notifications
+      - frontend
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:80/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  redis-data:
