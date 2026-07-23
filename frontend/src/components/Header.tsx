@@ -22,15 +22,10 @@ export function Header() {
     navigate("/");
   };
 
-  const isResto =
-    user !== null &&
-    (user.email === "chef@gourmet.fr" || user.id === "usr_resto" || user.email.includes("resto"));
-  const isCourier =
-    user !== null &&
-    (user.email === "bob@livreur.fr" ||
-      user.id === "usr_bob" ||
-      user.email.includes("livreur") ||
-      user.email.includes("courier"));
+  const role = user?.role ?? null;
+  const isResto = role === "restaurant_owner";
+  const isCourier = role === "courier";
+  const isClient = role === "client";
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
@@ -67,21 +62,25 @@ export function Header() {
           ) : null}
           {user ? (
             <>
-              <Button variant="ghost" asChild>
-                <Link to="/orders">
-                  <History aria-hidden="true" />
-                  <span className="hidden sm:inline">Mes commandes</span>
-                </Link>
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setCartOpen(true)}
-                aria-label={`Ouvrir le panier (${count} article${count > 1 ? "s" : ""})`}
-              >
-                <ShoppingBag aria-hidden="true" />
-                <span className="hidden sm:inline">Panier</span>
-                {count > 0 ? <Badge aria-hidden="true">{count}</Badge> : null}
-              </Button>
+              {isClient ? (
+                <>
+                  <Button variant="ghost" asChild>
+                    <Link to="/orders">
+                      <History aria-hidden="true" />
+                      <span className="hidden sm:inline">Mes commandes</span>
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setCartOpen(true)}
+                    aria-label={`Ouvrir le panier (${count} article${count > 1 ? "s" : ""})`}
+                  >
+                    <ShoppingBag aria-hidden="true" />
+                    <span className="hidden sm:inline">Panier</span>
+                    {count > 0 ? <Badge aria-hidden="true">{count}</Badge> : null}
+                  </Button>
+                </>
+              ) : null}
               <span className="hidden max-w-32 truncate text-sm text-muted-foreground md:inline">
                 {user.name}
               </span>
@@ -106,7 +105,7 @@ export function Header() {
           )}
         </nav>
       </div>
-      {user ? <CartSheet open={cartOpen} onOpenChange={setCartOpen} /> : null}
+      {isClient ? <CartSheet open={cartOpen} onOpenChange={setCartOpen} /> : null}
     </header>
   );
 }

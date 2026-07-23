@@ -7,11 +7,15 @@
 // users service (port 8001)
 // ---------------------------------------------------------------------------
 
+/** Application role controlling which views a user may access. */
+export type UserRole = "client" | "restaurant_owner" | "courier";
+
 export interface User {
   id: string;
   email: string;
   name: string;
   phone: string;
+  role: UserRole;
 }
 
 export interface RegisterPayload {

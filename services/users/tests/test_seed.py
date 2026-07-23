@@ -3,6 +3,15 @@
 from fastapi.testclient import TestClient
 
 from app.main import create_app
+from app.schemas.users import UserRole
+from app.seed import SEED_USERS
+
+
+def test_seed_users_have_expected_roles() -> None:
+    roles = {user.id: user.role for user in SEED_USERS}
+    assert roles["usr_alice"] == UserRole.CLIENT
+    assert roles["usr_resto"] == UserRole.RESTAURANT_OWNER
+    assert roles["usr_bob"] == UserRole.COURIER
 
 
 def test_seed_users_are_populated_at_startup() -> None:

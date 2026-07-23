@@ -17,6 +17,26 @@ def test_register_returns_201_with_public_profile(client: TestClient) -> None:
     assert "password_hash" not in body
 
 
+def test_register_defaults_role_to_client(client: TestClient) -> None:
+    response = client.post("/api/v1/users", json=USER_PAYLOAD)
+    assert response.status_code == 201
+    assert response.json()["role"] == "client"
+
+
+def test_register_ignores_role_in_payload(client: TestClient) -> None:
+    """The role is backend-owned: any client-provided role is ignored."""
+    payload = {**USER_PAYLOAD, "role": "restaurant_owner"}
+    response = client.post("/api/v1/users", json=payload)
+    assert response.status_code == 201
+    assert response.json()["role"] == "client"
+
+
+def test_get_profile_exposes_role(client: TestClient, auth_headers: dict[str, str]) -> None:
+    response = client.get("/api/v1/users/me", headers=auth_headers)
+    assert response.status_code == 200
+    assert response.json()["role"] == "client"
+
+
 def test_register_duplicate_email_returns_409(client: TestClient) -> None:
     assert client.post("/api/v1/users", json=USER_PAYLOAD).status_code == 201
     response = client.post("/api/v1/users", json=USER_PAYLOAD)
