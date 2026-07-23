@@ -60,7 +60,11 @@ export function OrderTrackingPage() {
             <CardTitle className="text-xl">Suivi en temps réel</CardTitle>
           </CardHeader>
           <CardContent>
-            <OrderStatusTimeline status={order.status} />
+            <OrderStatusTimeline
+              status={order.status}
+              cancellationReason={order.cancellation_reason}
+              refunded={order.payment_id != null}
+            />
           </CardContent>
         </Card>
 

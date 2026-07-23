@@ -169,6 +169,7 @@ export interface Order {
   status: OrderStatus;
   saga_state: string;
   payment_id: string | null;
+  cancellation_reason: string | null;
   delivery_id: string | null;
   created_at: string;
   updated_at: string;
