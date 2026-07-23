@@ -118,3 +118,72 @@ def test_no_event_is_published_before_ready(client: TestClient) -> None:
     bus = client.app.state.event_bus  # type: ignore[attr-defined]
     assert isinstance(bus, InMemoryEventBus)
     assert bus.published == []
+
+
+def test_list_tickets_empty_kitchen_returns_empty_list(client: TestClient) -> None:
+    restaurant = create_restaurant(client)
+    response = client.get(f"/api/v1/restaurants/{restaurant['id']}/kitchen-tickets")
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_list_tickets_returns_all_tickets_in_insertion_order(client: TestClient) -> None:
+    restaurant = create_restaurant(client)
+    first = _create_ticket(client, restaurant["id"])
+    second = _create_ticket(client, restaurant["id"])
+    third = _create_ticket(client, restaurant["id"])
+
+    response = client.get(f"/api/v1/restaurants/{restaurant['id']}/kitchen-tickets")
+    assert response.status_code == 200
+    body: list[dict[str, Any]] = response.json()
+    assert [ticket["id"] for ticket in body] == [first["id"], second["id"], third["id"]]
+    assert body[0]["status"] == "ACCEPTED"
+    assert body[0]["order_id"] == "order-123"
+
+
+def test_list_tickets_is_isolated_between_restaurants(client: TestClient) -> None:
+    restaurant_a = create_restaurant(client, name="Resto A")
+    restaurant_b = create_restaurant(client, name="Resto B")
+    ticket_a = _create_ticket(client, restaurant_a["id"])
+    _create_ticket(client, restaurant_b["id"])
+
+    response = client.get(f"/api/v1/restaurants/{restaurant_a['id']}/kitchen-tickets")
+    assert response.status_code == 200
+    body: list[dict[str, Any]] = response.json()
+    assert [ticket["id"] for ticket in body] == [ticket_a["id"]]
+    assert all(ticket["restaurant_id"] == restaurant_a["id"] for ticket in body)
+
+
+def test_list_tickets_for_unknown_restaurant_returns_404(client: TestClient) -> None:
+    response = client.get("/api/v1/restaurants/unknown-id/kitchen-tickets")
+    assert response.status_code == 404
+
+
+def test_list_tickets_filters_by_status(client: TestClient) -> None:
+    restaurant = create_restaurant(client)
+    accepted = _create_ticket(client, restaurant["id"])
+    preparing = _create_ticket(client, restaurant["id"])
+    _patch_status(client, preparing["id"], "PREPARING")
+
+    response = client.get(
+        f"/api/v1/restaurants/{restaurant['id']}/kitchen-tickets",
+        params={"status": "PREPARING"},
+    )
+    assert response.status_code == 200
+    body: list[dict[str, Any]] = response.json()
+    assert [ticket["id"] for ticket in body] == [preparing["id"]]
+
+    response = client.get(
+        f"/api/v1/restaurants/{restaurant['id']}/kitchen-tickets",
+        params={"status": "ACCEPTED"},
+    )
+    assert [ticket["id"] for ticket in response.json()] == [accepted["id"]]
+
+
+def test_list_tickets_with_invalid_status_returns_422(client: TestClient) -> None:
+    restaurant = create_restaurant(client)
+    response = client.get(
+        f"/api/v1/restaurants/{restaurant['id']}/kitchen-tickets",
+        params={"status": "BURNED"},
+    )
+    assert response.status_code == 422
