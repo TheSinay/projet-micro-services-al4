@@ -39,13 +39,22 @@ const STEPS: TimelineStep[] = [
 
 interface OrderStatusTimelineProps {
   status: OrderStatus;
+  /** Human-readable cancellation reason (already localized by the backend). */
+  cancellationReason?: string | null;
+  /** Whether a payment was captured and thus refunded on cancellation. */
+  refunded?: boolean;
 }
 
 /**
- * Vertical timeline of the order lifecycle. A cancelled order (compensated
- * saga: payment refunded) is shown as a red alert instead of the steps.
+ * Vertical timeline of the order lifecycle. A cancelled order is shown as a
+ * red alert instead of the steps: it states the reason and only mentions a
+ * refund when a payment was actually captured.
  */
-export function OrderStatusTimeline({ status }: OrderStatusTimelineProps) {
+export function OrderStatusTimeline({
+  status,
+  cancellationReason,
+  refunded = false,
+}: OrderStatusTimelineProps) {
   if (status === "CANCELLED") {
     return (
       <div
@@ -55,10 +64,12 @@ export function OrderStatusTimeline({ status }: OrderStatusTimelineProps) {
         <XCircle className="mt-0.5 h-6 w-6 shrink-0 text-destructive" aria-hidden="true" />
         <div>
           <p className="font-semibold text-destructive">
-            Commande annulée — vous avez été remboursé.
+            {cancellationReason ?? "Votre commande a été annulée."}
           </p>
           <p className="text-sm text-muted-foreground">
-            Le montant débité vous sera recrédité intégralement.
+            {refunded
+              ? "Le montant débité vous sera recrédité intégralement."
+              : "Aucun montant n'a été débité."}
           </p>
         </div>
       </div>

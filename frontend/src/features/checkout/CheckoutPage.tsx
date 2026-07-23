@@ -89,7 +89,16 @@ export function CheckoutPage() {
     onSuccess: (order) => {
       void queryClient.invalidateQueries({ queryKey: ["cart", user?.id] });
       void queryClient.invalidateQueries({ queryKey: ["addresses", user?.id] });
-      toast.success("Commande confirmée ! Suivez sa préparation en direct.");
+      // The backend saga always returns 201, even when the order ends up
+      // cancelled: rely on the resolved status, not the HTTP success.
+      if (order.status === "CANCELLED") {
+        toast.error(
+          order.cancellation_reason ??
+            "Votre commande n'a pas pu aboutir. Consultez le détail pour en savoir plus.",
+        );
+      } else {
+        toast.success("Commande confirmée ! Suivez sa préparation en direct.");
+      }
       navigate(`/orders/${order.id}`, { replace: true });
     },
     onError: (error) => {

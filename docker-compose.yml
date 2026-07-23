@@ -18,7 +18,7 @@ services:
     build: ./services/users
     container_name: fitmeal-users
     environment:
-      - REDIS_URL=redis://redis:6379/0
+      - USERS_REDIS_URL=redis://redis:6379/0
     depends_on:
       redis:
         condition: service_healthy
@@ -34,8 +34,8 @@ services:
     build: ./services/restaurants
     container_name: fitmeal-restaurants
     environment:
-      - REDIS_URL=redis://redis:6379/0
-      - EVENT_BUS=redis
+      - RESTAURANTS_REDIS_URL=redis://redis:6379/0
+      - RESTAURANTS_EVENT_BUS=redis
     depends_on:
       redis:
         condition: service_healthy
@@ -51,12 +51,12 @@ services:
     build: ./services/orders
     container_name: fitmeal-orders
     environment:
-      - REDIS_URL=redis://redis:6379/0
-      - EVENT_BUS=redis
-      - USERS_SERVICE_URL=http://users:8000
-      - RESTAURANTS_SERVICE_URL=http://restaurants:8000
-      - PAYMENTS_SERVICE_URL=http://payments:8000
-      - DELIVERIES_SERVICE_URL=http://deliveries:8000
+      - ORDERS_REDIS_URL=redis://redis:6379/0
+      - ORDERS_EVENT_BUS_BACKEND=redis
+      - ORDERS_CART_STORE_BACKEND=redis
+      - ORDERS_RESTAURANTS_URL=http://restaurants:8000
+      - ORDERS_PAYMENTS_URL=http://payments:8000
+      - ORDERS_DELIVERIES_URL=http://deliveries:8000
     depends_on:
       redis:
         condition: service_healthy
@@ -79,8 +79,6 @@ services:
   payments:
     build: ./services/payments
     container_name: fitmeal-payments
-    environment:
-      - REDIS_URL=redis://redis:6379/0
     depends_on:
       redis:
         condition: service_healthy
@@ -96,8 +94,8 @@ services:
     build: ./services/deliveries
     container_name: fitmeal-deliveries
     environment:
-      - REDIS_URL=redis://redis:6379/0
-      - EVENT_BUS=redis
+      - DELIVERIES_REDIS_URL=redis://redis:6379/0
+      - DELIVERIES_EVENT_BACKEND=redis
     depends_on:
       redis:
         condition: service_healthy
@@ -113,7 +111,7 @@ services:
     build: ./services/notifications
     container_name: fitmeal-notifications
     environment:
-      - REDIS_URL=redis://redis:6379/0
+      - NOTIFICATIONS_REDIS_URL=redis://redis:6379/0
       - NOTIFICATIONS_EVENT_BACKEND=redis
     depends_on:
       redis:

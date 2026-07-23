@@ -179,6 +179,8 @@ Le gateway **Nginx** ([ADR 0006](decisions/0006-api-gateway-nginx.md)), exposé 
 - propagation de `X-Correlation-Id` ;
 - responsabilités futures documentées : authentification centralisée, rate limiting, TLS, load balancing de N instances par service.
 
+> **Limite connue — résolution DNS statique** : les directives `proxy_pass` visent les upstreams par **nom de service** et Nginx **résout leur IP au démarrage**. Après un `docker compose up -d` qui **recrée** un conteneur backend (nouvelle IP), le gateway garde l'IP périmée → **404 / 502 trompeurs**. Contournement actuel : `docker compose restart gateway`. Amélioration envisagée : `resolver` Nginx + variables pour une résolution dynamique (voir [problème 2026-07-23](problemes/2026-07-23-config-inter-services-docker-compose-prefixes.md)).
+
 ## 10. Résilience (résumé)
 
 Détail dans l'[ADR 0007](decisions/0007-resilience-circuit-breaker-maison.md). Module `resilience.py` interne au service-commandes, appliqué aux appels sortants de l'orchestrateur (cible principale : **orders → payments**, dont le PSP simulé est instable) :
@@ -203,3 +205,10 @@ Détail dans l'[ADR 0003](decisions/0003-saga-orchestree-passage-commande.md). A
 - Erreurs normalisées (code, message, détails) — jamais d'erreur brute exposée au client final.
 - `X-Correlation-Id` : généré s'il est absent, propagé aux appels sortants et inclus dans les événements et les logs structlog.
 - Testabilité hermétique : aucun test n'exige un Redis ou un service tiers actif (repositories in-memory, `InMemoryEventBus`, client HTTP mocké).
+
+### Configuration inter-services (env_prefix)
+
+- Chaque service lit sa configuration via **pydantic-settings** avec un **`env_prefix` propre** : `ORDERS_`, `RESTAURANTS_`, `DELIVERIES_`, `NOTIFICATIONS_`, `USERS_`. Toute variable injectée par `docker-compose.yml` **doit être préfixée** en conséquence, sinon elle est **silencieusement ignorée** et le service retombe sur ses valeurs par défaut (`localhost`). Exemples : `ORDERS_RESTAURANTS_URL=http://restaurants:8000`, `<PREFIX>_REDIS_URL=redis://redis:6379/0`.
+- En Docker, les URLs inter-services pointent sur le **nom de service** et le **port interne 8000** (jamais `localhost`).
+- **Activation du bus Redis** : le nom du champ diffère encore selon les services — `ORDERS_EVENT_BUS_BACKEND=redis` (orders), `RESTAURANTS_EVENT_BUS=redis` (restaurants), `DELIVERIES_EVENT_BACKEND` / `NOTIFICATIONS_EVENT_BACKEND=redis` (deliveries, notifications). Hétérogénéité à harmoniser (dette ouverte).
+- **Statut HTTP vs état métier** : la saga de commande renvoie **HTTP 201 même pour une commande annulée** ; les clients (frontend inclus) doivent se baser sur `order.status` et non sur le seul code HTTP.
