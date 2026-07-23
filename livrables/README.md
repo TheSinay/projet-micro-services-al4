@@ -16,6 +16,9 @@ Ce dossier réunit l'intégralité des livrables exigés par le sujet ([enonce.m
 | 📜 **Livrable 3** | **Spécifications & Contrats d'API REST**<br>*Contrats OpenAPI 3.0 normalisés pour l'ensemble des 6 microservices.* | [3_contrats_api_openapi.md](3_contrats_api_openapi.md) |
 | 🎬 **Livrable 4** | **Support de Présentation (Slides & Démo)**<br>*Diaporama complet (Marp/Markdown), script d'oral 15 min, scénario de démo live & Q&R Jury.* | [4_slides_presentation.md](4_slides_presentation.md) |
 | 🏛️ **Livrable 5** | **Recueil des Décisions d'Architecture (ADRs)**<br>*Compilation intégrale des ADRs 0001 à 0011 formalisant chaque choix technique.* | [5_recueil_decisions_adr.md](5_recueil_decisions_adr.md) |
+| 🖥️ **Livrable 6** | **Présentation de soutenance (PowerPoint)**<br>*Deck jury `.pptx` (16 slides) : découpe microservices, architecture C4, technologies, communication inter-services et diagrammes rendus.* | [6_presentation_soutenance.pptx](6_presentation_soutenance.pptx) |
+
+> Les diagrammes sont également fournis **rendus en images** (PNG haute résolution) dans [`diagrammes_images/`](diagrammes_images/) — réutilisables hors du deck. Le générateur reproductible du PowerPoint se trouve dans [`tools/build_presentation.py`](tools/build_presentation.py) (regénère le `.pptx` depuis les images ; `pip install python-pptx`).
 
 ---
 
